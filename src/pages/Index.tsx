@@ -21,6 +21,13 @@ const mockGoogleScriptFunctions = {
   }
 };
 
+// Type definition for window.particlesJS
+declare global {
+  interface Window {
+    particlesJS: any;
+  }
+}
+
 const Index = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [currentStep, setCurrentStep] = useState<"key" | "form" | "result">("key");

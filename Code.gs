@@ -4,6 +4,8 @@ const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 دقائق
 const SPREADSHEET_ID = null; // قم بوضع معرّف جدول البيانات الخاص بك هنا
 const PDF_TEMPLATE_ID_1 = '1gukbJwN35ziQyb5OnsNeWJvP4ZLU_4X8LBAGIVTz3kE';
 const PDF_TEMPLATE_ID_2 = '1czCXdBsOdEHV9LEaD2UlhF82nvlskfMiv5dGcjnPk0o';
+const DELETE_TIME = 180; // minutes - سيتم حذف الملفات بعد هذه المدة
+const TEMP_FOLDER_NAME = 'temp_registration_files'; // اسم المجلد المؤقت
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index')
@@ -18,6 +20,54 @@ function getSpreadsheet() {
     return SpreadsheetApp.openById(SPREADSHEET_ID);
   }
   return SpreadsheetApp.getActive();
+}
+
+// ========== الحصول على أو إنشاء مجلد مؤقت ==========
+function getTempFolder() {
+  try {
+    // محاولة العثور على المجلد
+    const folders = DriveApp.getFoldersByName(TEMP_FOLDER_NAME);
+    
+    // إذا وجدنا المجلد، نستخدمه
+    if (folders.hasNext()) {
+      return folders.next();
+    }
+    
+    // إنشاء مجلد جديد إذا لم يكن موجوداً
+    return DriveApp.createFolder(TEMP_FOLDER_NAME);
+  } catch (e) {
+    Logger.log('خطأ في الوصول للمجلد المؤقت: ' + e.message);
+    // استخدام المجلد الجذر في حالة الفشل
+    return DriveApp.getRootFolder();
+  }
+}
+
+// ========== تنظيف الملفات القديمة ==========
+function cleanupOldFiles() {
+  try {
+    const tempFolder = getTempFolder();
+    const files = tempFolder.getFiles();
+    const currentTime = new Date().getTime();
+    const expirationTime = DELETE_TIME * 60 * 1000; // تحويل الدقائق إلى ميلي ثانية
+    let deletedCount = 0;
+    
+    while (files.hasNext()) {
+      const file = files.next();
+      const fileDate = file.getDateCreated().getTime();
+      
+      // حذف الملفات التي تجاوزت الوقت المحدد
+      if ((currentTime - fileDate) > expirationTime) {
+        file.setTrashed(true);
+        deletedCount++;
+      }
+    }
+    
+    Logger.log(`تم تنظيف ${deletedCount} ملفات قديمة`);
+    return deletedCount;
+  } catch (e) {
+    Logger.log('خطأ في تنظيف الملفات القديمة: ' + e.message);
+    return 0;
+  }
 }
 
 // ========== التحقق من المفتاح ==========
@@ -59,6 +109,9 @@ function processFormWithImage(name, base64Image, mimeType) {
   let tempDocIds = [];
   
   try {
+    // تنظيف الملفات القديمة قبل إنشاء ملفات جديدة
+    cleanupOldFiles();
+    
     // التحقق من الاسم
     if (!name || name.length > 100) {
       throw new Error('الاسم غير صحيح أو طويل جداً');
@@ -115,7 +168,8 @@ function processFormWithImage(name, base64Image, mimeType) {
 function saveImage(base64String, mimeType) {
   try {
     const blob = Utilities.base64Decode(base64String);
-    const file = DriveApp.createFile(Utilities.newBlob(blob, mimeType, 'uploaded_image'));
+    const tempFolder = getTempFolder();
+    const file = tempFolder.createFile(Utilities.newBlob(blob, mimeType, `image_${Date.now()}`));
     return file.getId();
   } catch (e) {
     Logger.log('خطأ في حفظ الصورة: ' + e.message);
@@ -129,7 +183,8 @@ function createPdfFromTemplate(templateId, name) {
   try {
     // إنشاء نسخة مؤقتة من النموذج
     const templateFile = DriveApp.getFileById(templateId);
-    const tempFile = templateFile.makeCopy(`Temp_${name}_${Date.now()}`);
+    const tempFolder = getTempFolder();
+    const tempFile = templateFile.makeCopy(`Temp_${name}_${Date.now()}`, tempFolder);
     tempIds.push(tempFile.getId());
     
     const doc = DocumentApp.openById(tempFile.getId());
@@ -143,8 +198,9 @@ function createPdfFromTemplate(templateId, name) {
     doc.saveAndClose();
     
     // تحويل المستند المؤقت إلى PDF
-    const pdfFile = DriveApp.createFile(doc.getAs('application/pdf'));
-    
+    const pdfBlob = tempFile.getAs('application/pdf');
+    const pdfFile = tempFolder.createFile(pdfBlob.setName(`Certificate_${name}_${Date.now()}.pdf`));
+    pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); 
     return { pdf: pdfFile, tempIds: tempIds };
   } catch (e) {
     Logger.log('خطأ في إنشاء PDF الأول: ' + e.message);
@@ -157,7 +213,8 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
   try {
     // إنشاء نسخة مؤقتة من النموذج
     const templateFile = DriveApp.getFileById(templateId);
-    const tempFile = templateFile.makeCopy(`Temp_${name}_${Date.now()}`);
+    const tempFolder = getTempFolder();
+    const tempFile = templateFile.makeCopy(`Temp_${name}_${Date.now()}`, tempFolder);
     tempIds.push(tempFile.getId());
     
     const doc = DocumentApp.openById(tempFile.getId());
@@ -212,11 +269,32 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
     doc.saveAndClose();
     
     // تحويل المستند المؤقت إلى PDF
-    const pdfFile = DriveApp.createFile(doc.getAs('application/pdf'));
+    const pdfBlob = tempFile.getAs('application/pdf');
+    const pdfFile = tempFolder.createFile(pdfBlob.setName(`ID_${name}_${Date.now()}.pdf`));
+    pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); 
     
     return { pdf: pdfFile, tempIds: tempIds };
   } catch (e) {
     Logger.log('خطأ في إنشاء PDF الثاني: ' + e.message);
     throw new Error('فشل إنشاء البطاقة: ' + e.message);
   }
+}
+
+// ========== تشغيل عملية التنظيف بشكل دوري ==========
+function setupTrigger() {
+  // حذف أي مشغلات موجودة مسبقاً لتجنب التكرار
+  const triggers = ScriptApp.getProjectTriggers();
+  for (let i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'cleanupOldFiles') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  
+  // إنشاء مشغل جديد يعمل كل ساعة
+  ScriptApp.newTrigger('cleanupOldFiles')
+    .timeBased()
+    .everyHours(1)
+    .create();
+  
+  return "تم إعداد عملية التنظيف التلقائي بنجاح";
 }
