@@ -56,6 +56,7 @@ function validateKey(key) {
 // ========== معالجة النموذج مع الصورة ==========
 function processFormWithImage(name, base64Image, mimeType) {
   let imageId = null;
+  let tempDocIds = [];
   
   try {
     // التحقق من الاسم
@@ -75,12 +76,15 @@ function processFormWithImage(name, base64Image, mimeType) {
     logSheet.appendRow([name, imageId, new Date()]);
     
     // إنشاء ملفات PDF
-    const pdf1 = createPdfFromCopy(PDF_TEMPLATE_ID_1, name);
-    const pdf2 = createPdfWithImageFromCopy(PDF_TEMPLATE_ID_2, name, imageId);
+    const pdf1Result = createPdfFromTemplate(PDF_TEMPLATE_ID_1, name);
+    const pdf2Result = createPdfWithImageFromTemplate(PDF_TEMPLATE_ID_2, name, imageId);
+    
+    // إضافة معرفات المستندات المؤقتة للتنظيف لاحقًا
+    tempDocIds = [...pdf1Result.tempIds, ...pdf2Result.tempIds];
     
     return { 
-      pdf1: pdf1.getUrl(), 
-      pdf2: pdf2.getUrl() 
+      pdf1: pdf1Result.pdf.getUrl(), 
+      pdf2: pdf2Result.pdf.getUrl() 
     };
     
   } catch (e) {
@@ -95,6 +99,15 @@ function processFormWithImage(name, base64Image, mimeType) {
         Logger.log('فشل حذف الصورة المؤقتة: ' + err.message);
       }
     }
+    
+    // حذف المستندات المؤقتة
+    tempDocIds.forEach(id => {
+      try {
+        DriveApp.getFileById(id).setTrashed(true);
+      } catch(err) {
+        Logger.log('فشل حذف المستند المؤقت: ' + err.message);
+      }
+    });
   }
 }
 
@@ -111,9 +124,15 @@ function saveImage(base64String, mimeType) {
 }
 
 // ========== دوال إنشاء PDF ==========
-function createPdfFromCopy(templateId, name) {
+function createPdfFromTemplate(templateId, name) {
+  const tempIds = [];
   try {
-    const doc = DocumentApp.openById(templateId);
+    // إنشاء نسخة مؤقتة من النموذج
+    const templateFile = DriveApp.getFileById(templateId);
+    const tempFile = templateFile.makeCopy(`Temp_${name}_${Date.now()}`);
+    tempIds.push(tempFile.getId());
+    
+    const doc = DocumentApp.openById(tempFile.getId());
     const body = doc.getBody();
     
     if (!body.findText('{الاسم}')) {
@@ -122,17 +141,26 @@ function createPdfFromCopy(templateId, name) {
     
     body.replaceText('{الاسم}', name);
     doc.saveAndClose();
+    
+    // تحويل المستند المؤقت إلى PDF
     const pdfFile = DriveApp.createFile(doc.getAs('application/pdf'));
-    return pdfFile;
+    
+    return { pdf: pdfFile, tempIds: tempIds };
   } catch (e) {
     Logger.log('خطأ في إنشاء PDF الأول: ' + e.message);
     throw new Error('فشل إنشاء الشهادة: ' + e.message);
   }
 }
 
-function createPdfWithImageFromCopy(templateId, name, imageUrl) {
+function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
+  const tempIds = [];
   try {
-    const doc = DocumentApp.openById(templateId);
+    // إنشاء نسخة مؤقتة من النموذج
+    const templateFile = DriveApp.getFileById(templateId);
+    const tempFile = templateFile.makeCopy(`Temp_${name}_${Date.now()}`);
+    tempIds.push(tempFile.getId());
+    
+    const doc = DocumentApp.openById(tempFile.getId());
     const body = doc.getBody();
     
     // استبدال الاسم
@@ -182,8 +210,11 @@ function createPdfWithImageFromCopy(templateId, name, imageUrl) {
     image.setWidth(newWidth).setHeight(newWidth / aspectRatio);
 
     doc.saveAndClose();
+    
+    // تحويل المستند المؤقت إلى PDF
     const pdfFile = DriveApp.createFile(doc.getAs('application/pdf'));
-    return pdfFile;
+    
+    return { pdf: pdfFile, tempIds: tempIds };
   } catch (e) {
     Logger.log('خطأ في إنشاء PDF الثاني: ' + e.message);
     throw new Error('فشل إنشاء البطاقة: ' + e.message);
