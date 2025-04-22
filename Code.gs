@@ -1,10 +1,11 @@
 
-const FAILED_ATTEMPTS_LIMIT = 5;
-const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 دقائق
-const SPREADSHEET_ID = null; // قم بوضع معرّف جدول البيانات الخاص بك هنا
+const FAILED_ATTEMPTS_LIMIT = 5; // عدد المحالولات الخاطئه
+const LOCKOUT_DURATION = 5 * 60 * 1000; //  مدة الحظر بسبب الاسبام
+const SPREADSHEET_ID = '1xJfs2f8roHCLJuNNJCuOsuoFOr9G0v6xN1paoL3cjZ8'; // قم بوضع معرّف جدول البيانات الخاص بك هنا
 const PDF_TEMPLATE_ID_1 = '1gukbJwN35ziQyb5OnsNeWJvP4ZLU_4X8LBAGIVTz3kE';
 const PDF_TEMPLATE_ID_2 = '1czCXdBsOdEHV9LEaD2UlhF82nvlskfMiv5dGcjnPk0o';
-const DELETE_TIME = 180; // minutes - سيتم حذف الملفات بعد هذه المدة
+const PDF_TEMPLATE_ID_3 = '10qMk8dalG72juvwHk_4LmdQXAkz8fSHXLW3bshLL2Uo'
+const DELETE_TIME = 1440; // بالدقائق - سيتم حذف الملفات بعد هذه المدة
 const TEMP_FOLDER_NAME = 'temp_registration_files'; // اسم المجلد المؤقت
 
 function doGet() {
@@ -77,22 +78,32 @@ function validateKey(key) {
     const ip = Session.getActiveUser().getEmail() || 'anonymous';
 
     if (parseInt(cache.get(ip) || '0') >= FAILED_ATTEMPTS_LIMIT) {
-      throw new Error('تم تجاوز عدد المحاولات، الرجاء الانتظار 5 دقائق');
+      throw 'تم تجاوز عدد المحاولات، الرجاء الانتظار 5 دقائق';
     }
 
     key = (key || '').toString().trim();
+    rank = (rank || '').toString().trim();
+    used = (used || '').toString().trim();
     const sheet = getSpreadsheet().getSheetByName('المفاتيح');
     const keys = sheet.getRange(1, 1, sheet.getLastRow(), 1)
       .getValues()
       .flat()
       .map(k => k.toString().trim());
-
+    const rank = sheet.getRange(1, 2, sheet.getLastRow(), 1)
+      .getValues()
+      .flat()
+      .map(k => k.toString().trim());
+    const used = sheet.getRange(1, 3, sheet.getLastRow(), 1)
+      .getValues()
+      .flat()
+      .map(k => k.toString().trim());
+  
     const isValid = keys.includes(key);
 
     if (!isValid) {
       const attempts = parseInt(cache.get(ip) || '0') + 1;
       cache.put(ip, attempts.toString(), 5 * 60); // LOCKOUT_DURATION/1000
-      throw new Error('المفتاح غير صحيح');
+      throw 'المفتاح غير صحيح';
     }
 
     return true;
@@ -114,26 +125,27 @@ function processFormWithImage(name, base64Image, mimeType) {
     
     // التحقق من الاسم
     if (!name || name.length > 100) {
-      throw new Error('الاسم غير صحيح أو طويل جداً');
+      throw 'الاسم غير صحيح أو طويل جداً';
     }
     
     // حفظ الصورة في Google Drive
     imageId = saveImage(base64Image, mimeType);
     
     if (!imageId) {
-      throw new Error('فشل في حفظ الصورة');
+      throw 'فشل في حفظ الصورة';
     }
-    
-    // تسجيل البيانات في جدول البيانات
-    const logSheet = getSpreadsheet().getSheetByName('السجلات');
-    logSheet.appendRow([name, imageId, new Date()]);
-    
+
     // إنشاء ملفات PDF
     const pdf1Result = createPdfFromTemplate(PDF_TEMPLATE_ID_1, name);
     const pdf2Result = createPdfWithImageFromTemplate(PDF_TEMPLATE_ID_2, name, imageId);
     
     // إضافة معرفات المستندات المؤقتة للتنظيف لاحقًا
     tempDocIds = [...pdf1Result.tempIds, ...pdf2Result.tempIds];
+    
+    // تسجيل البيانات في جدول البيانات
+    const logSheet = getSpreadsheet().getSheetByName('السجلات');
+    //pdf_url = null اذا كان غير موجود
+    logSheet.appendRow([name, key, pdf1_url, pdf2_url, pdf3_url, new Date()]);
     
     return { 
       pdf1: pdf1Result.pdf.getUrl(), 
@@ -191,7 +203,7 @@ function createPdfFromTemplate(templateId, name) {
     const body = doc.getBody();
     
     if (!body.findText('{الاسم}')) {
-      throw new Error('لم يتم العثور على مكان الاسم في القالب');
+      throw 'لم يتم العثور على مكان الاسم في القالب';
     }
     
     body.replaceText('{الاسم}', name);
@@ -227,7 +239,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
     const imagePlaceholder = body.findText('{الصورة}');
     
     if (!imagePlaceholder) {
-      throw new Error('لم يتم العثور على مكان الصورة في القالب');
+      throw 'لم يتم العثور على مكان الصورة في القالب';
     }
 
     const element = imagePlaceholder.getElement();
@@ -236,7 +248,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
 
     // التحقق من الفهرس
     if (index < 0 || index >= parent.getNumChildren()) {
-      throw new Error('موضع الصورة غير صحيح في القالب');
+      throw 'موضع الصورة غير صحيح في القالب';
     }
 
     // إزالة العنصر النائب
@@ -248,7 +260,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
 
     // التحقق من صحة الصورة
     if (!blob || blob.getBytes().length === 0) {
-      throw new Error('ملف الصورة غير صالح أو فارغ');
+      throw 'ملف الصورة غير صالح أو فارغ';
     }
 
     // إدراج الصورة مع التحكم في الحجم
@@ -259,7 +271,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
     const originalHeight = image.getHeight();
     
     if (originalWidth === 0 || originalHeight === 0) {
-      throw new Error('أبعاد الصورة غير صالحة');
+      throw 'أبعاد الصورة غير صالحة';
     }
     
     const aspectRatio = originalWidth / originalHeight;
