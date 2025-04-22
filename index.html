@@ -95,9 +95,10 @@
       border-radius: 1.5rem;
       padding: 2.5rem;
       width: 95%;
+      max-height: 100%;
       max-width: 600px;
       box-shadow: var(--card-shadow);
-      overflow: hidden;
+      overflow: auto;
       z-index: 10;
       transform: translateY(0);
       animation: cardEntrance 1s ease-out forwards;
@@ -106,7 +107,6 @@
 
     .header-image {
       width: 100%;
-      max-width: 100%;
       height: auto;
       margin: -2.5rem -2.5rem 1.5rem -2.5rem;
       width: calc(100% + 5rem);
@@ -760,6 +760,7 @@
       transform: translateY(20px);
       pointer-events: none;
       position: absolute;
+      display: none;
     }
     
     .section.visible {
