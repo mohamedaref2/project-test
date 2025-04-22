@@ -171,7 +171,7 @@ function getPreviousFiles(key) {
         const pdf1Url = row[2] || null;
         const pdf2Url = row[3] || null;
         const pdf3Url = row[4] || null;
-        const date = row[10] instanceof Date ? row[10] : new Date();
+        const date = row[8] instanceof Date ? row[8] : new Date();
         
         return {
           name: row[0],
@@ -185,7 +185,6 @@ function getPreviousFiles(key) {
           date: date.toLocaleDateString('ar-SA')
         };
       });
-    
     return results.reverse(); // إرجاع الأحدث أولاً
   } catch (e) {
     Logger.log('خطأ في جلب الملفات السابقة: ' + e.message);
@@ -281,9 +280,10 @@ function processFormWithImage(data) {
       teamNumber,     // رقم الفرقة
       serialNumber,   // الرقم التسلسلي
       gender,         // النوع
+      new Date(),     // التاريخ
       '',             // حقل احتياطي
-      '',             // حقل احتياطي
-      new Date()      // التاريخ
+      ''              // حقل احتياطي
+
     ]);
     
     // تحديث حالة الاستخدام للمفتاح (إذا لم يكن قائد)
@@ -539,4 +539,3 @@ function setupTrigger() {
 function onOpen() {
   cleanupOldFiles();
 }
-
