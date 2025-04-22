@@ -7,6 +7,7 @@ const PDF_TEMPLATE_ID_2 = '1czCXdBsOdEHV9LEaD2UlhF82nvlskfMiv5dGcjnPk0o'; // ق�
 const PDF_TEMPLATE_ID_3 = '10qMk8dalG72juvwHk_4LmdQXAkz8fSHXLW3bshLL2Uo'; // قالب PDF الثالث (للجان)
 const DELETE_TIME = 1440; // وقت الحذف بالدقائق - سيتم حذف الملفات بعد هذه المدة
 const TEMP_FOLDER_NAME = 'temp_registration_files'; // اسم المجلد المؤقت
+const APP_VERSION = '1.2.0'; // إصدار التطبيق - يساعد في تتبع التحديثات
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index')
@@ -76,9 +77,10 @@ function validateKey(key) {
   try {
     const cache = CacheService.getScriptCache();
     const ip = Session.getActiveUser().getEmail() || 'anonymous';
+    const cacheKey = 'failed_attempts_' + ip;
 
     // التحقق من تجاوز عدد المحاولات
-    if (parseInt(cache.get(ip) || '0') >= FAILED_ATTEMPTS_LIMIT) {
+    if (parseInt(cache.get(cacheKey) || '0') >= FAILED_ATTEMPTS_LIMIT) {
       throw('تم تجاوز عدد المحاولات، الرجاء الانتظار 5 دقائق');
     }
 
@@ -107,7 +109,7 @@ function validateKey(key) {
     const data = sheet.getRange(1, 1, lastRow, 3).getValues();
     
     // تسجيل البيانات للتصحيح
-    Logger.log('Sheet data: ' + JSON.stringify(data));
+    Logger.log('Sheet data rows: ' + data.length);
     
     // البحث عن المفتاح
     let foundIndex = -1;
@@ -116,7 +118,6 @@ function validateKey(key) {
     
     for (let i = 0; i < data.length; i++) {
       const rowKey = String(data[i][0]).trim();
-      Logger.log(`Comparing "${rowKey}" with "${key}"`);
       
       if (rowKey === key) {
         foundIndex = i;
@@ -130,10 +131,13 @@ function validateKey(key) {
     
     if (foundIndex === -1) {
       // إذا لم يتم العثور على المفتاح، زيادة عداد المحاولات الخاطئة
-      const attempts = parseInt(cache.get(ip) || '0') + 1;
-      cache.put(ip, attempts.toString(), 5 * 60); // تخزين لمدة 5 دقائق
+      const attempts = parseInt(cache.get(cacheKey) || '0') + 1;
+      cache.put(cacheKey, attempts.toString(), 5 * 60); // تخزين لمدة 5 دقائق
       throw('المفتاح غير صحيح');
     }
+
+    // إعادة تعيين عداد المحاولات الفاشلة عند النجاح
+    cache.remove(cacheKey);
 
     // الحصول على السجلات السابقة للمستخدم (للكشاف المسجل مسبقا أو قائد)
     let previousFiles = [];
@@ -212,6 +216,9 @@ function processFormWithImage(data) {
   let tempDocIds = [];
 
   try {
+    // تسجيل بداية العملية
+    Logger.log('بدء معالجة النموذج: ' + JSON.stringify(data));
+    
     // تنظيف الملفات القديمة قبل إنشاء ملفات جديدة
     cleanupOldFiles();
     
@@ -235,10 +242,12 @@ function processFormWithImage(data) {
       
       // حفظ الصورة إذا تم تقديمها
       if (data.base64Image && data.mimeType) {
+        Logger.log('جاري معالجة صورة القائد...');
         imageId = saveImage(data.base64Image, data.mimeType);
         if (!imageId) {
           throw('فشل في حفظ الصورة');
         }
+        Logger.log('تم حفظ صورة القائد بنجاح بمعرف: ' + imageId);
       }
     } 
     else if (rank === 'كشاف') {
@@ -247,10 +256,12 @@ function processFormWithImage(data) {
       
       // حفظ الصورة إذا تم تقديمها
       if (data.base64Image && data.mimeType) {
+        Logger.log('جاري معالجة صورة الكشاف...');
         imageId = saveImage(data.base64Image, data.mimeType);
         if (!imageId) {
           throw('فشل في حفظ الصورة');
         }
+        Logger.log('تم حفظ صورة الكشاف بنجاح بمعرف: ' + imageId);
       }
     }
     // لا نحتاج لأي معلومات إضافية للجان
@@ -263,9 +274,11 @@ function processFormWithImage(data) {
     // إنشاء ملفات PDF حسب الرتبة وتوفر القوالب
     if ((rank === 'كشاف' || rank === 'قائد') && PDF_TEMPLATE_ID_1) {
       try {
+        Logger.log('جاري إنشاء الشهادة PDF1...');
         const pdf1Result = createPdfFromTemplate(PDF_TEMPLATE_ID_1, name, gender);
         pdf1Url = pdf1Result.pdf.getUrl();
         tempDocIds = [...tempDocIds, ...pdf1Result.tempIds];
+        Logger.log('تم إنشاء الشهادة PDF1 بنجاح: ' + pdf1Url);
       } catch (e) {
         Logger.log('تعذر إنشاء الشهادة PDF1: ' + e.message);
         // لا نرمي خطأ هنا حتى لا نتوقف عن إنشاء باقي الملفات
@@ -275,9 +288,11 @@ function processFormWithImage(data) {
     // لإنشاء PDF الثاني، نحتاج إلى صورة
     if ((rank === 'كشاف' || rank === 'قائد') && imageId && PDF_TEMPLATE_ID_2) {
       try {
+        Logger.log('جاري إنشاء البطاقة PDF2...');
         const pdf2Result = createPdfWithImageFromTemplate(PDF_TEMPLATE_ID_2, name, imageId, gender);
         pdf2Url = pdf2Result.pdf.getUrl();
         tempDocIds = [...tempDocIds, ...pdf2Result.tempIds];
+        Logger.log('تم إنشاء البطاقة PDF2 بنجاح: ' + pdf2Url);
       } catch (e) {
         Logger.log('تعذر إنشاء البطاقة PDF2: ' + e.message);
       }
@@ -285,9 +300,11 @@ function processFormWithImage(data) {
     
     if ((rank === 'لجان' || rank === 'قائد') && PDF_TEMPLATE_ID_3) {
       try {
+        Logger.log('جاري إنشاء شهادة اللجان PDF3...');
         const pdf3Result = createPdfFromTemplate(PDF_TEMPLATE_ID_3, name, gender);
         pdf3Url = pdf3Result.pdf.getUrl();
         tempDocIds = [...tempDocIds, ...pdf3Result.tempIds];
+        Logger.log('تم إنشاء شهادة اللجان PDF3 بنجاح: ' + pdf3Url);
       } catch (e) {
         Logger.log('تعذر إنشاء شهادة اللجان PDF3: ' + e.message);
       }
@@ -317,12 +334,15 @@ function processFormWithImage(data) {
       const keySheet = getSpreadsheet().getSheetByName('المفاتيح');
       const keyData = validateKey(key);
       keySheet.getRange(keyData.index, 3).setValue('1'); // تحديث حالة الاستخدام
+      Logger.log('تم تحديث حالة استخدام المفتاح ' + key);
     }
     
     // في حالة عدم إنشاء أي ملف PDF، نعرض رسالة خطأ
     if (!pdf1Url && !pdf2Url && !pdf3Url) {
       throw('لم يتم إنشاء أي ملفات، تأكد من توفر قوالب PDF');
     }
+    
+    Logger.log('تمت معالجة النموذج بنجاح');
     
     return { 
       pdf1: pdf1Url, 
@@ -424,6 +444,8 @@ function getPreviousResults(key) {
 // ========== حفظ الصورة ==========
 function saveImage(base64Image, mimeType) {
   try {
+    Logger.log('بدء حفظ الصورة...');
+    
     // لو السطر يحتوي على "data:image" بنشيل الجزء التعريفي
     const base64Data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
 
@@ -433,6 +455,8 @@ function saveImage(base64Image, mimeType) {
 
     // رفع الصورة لجوجل درايف
     const file = DriveApp.createFile(blob);
+    Logger.log('تم حفظ الصورة بنجاح. معرف الملف: ' + file.getId());
+    
     return file.getId();
 
   } catch (e) {
@@ -582,3 +606,4 @@ function setupTrigger() {
 function onOpen() {
   cleanupOldFiles();
 }
+
