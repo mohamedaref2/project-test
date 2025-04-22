@@ -5,29 +5,58 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام التسجيل</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lottie-web@5.7.8/build/player/lottie.min.js"></script>
   <style>
-    /* Base Styles */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      transition: background-color 0.3s, color 0.3s;
+    /* أساسيات التصميم */
+    :root {
+      --primary-color: #5a67d8;
+      --primary-dark: #4c51bf;
+      --primary-light: #c3dafe;
+      --secondary-color: #805ad5;
+      --secondary-dark: #6b46c1;
+      --success-color: #48bb78;
+      --warning-color: #f6ad55;
+      --error-color: #f56565;
+      --text-dark: #2d3748;
+      --text-light: #a0aec0;
+      --card-bg-light: rgba(255, 255, 255, 0.85);
+      --card-bg-dark: rgba(45, 55, 72, 0.85);
+      --transition-normal: all 0.3s ease;
+      --box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
     
+    body {
+      font-family: 'Tajawal', sans-serif;
+      transition: var(--transition-normal);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* وضع المظهر الفاتح والداكن */
     .dark-mode {
-      background: linear-gradient(to bottom right, #1a202c, #2d3748);
+      background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
       color: #f7fafc;
     }
     
     .light-mode {
-      background: linear-gradient(to bottom right, #ebf4ff, #e6e6ff);
-      color: #1a202c;
+      background: linear-gradient(135deg, #ebf4ff 0%, #e6e6ff 100%);
+      color: #2d3748;
     }
     
-    /* Animations */
+    /* الرسوم المتحركة */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(10px); }
     }
     
     @keyframes pulse {
@@ -35,20 +64,53 @@
       50% { opacity: 0.7; }
     }
     
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+    
     .animate-fade-in {
-      animation: fadeIn 0.3s ease-out forwards;
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    
+    .animate-fade-out {
+      animation: fadeOut 0.3s ease-out forwards;
     }
     
     .animate-pulse {
       animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
     
-    /* Custom Components */
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    
+    .shimmer {
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.5), rgba(255,255,255,0));
+      background-size: 1000px 100%;
+      animation: shimmer 2s infinite linear;
+    }
+    
+    /* مكونات مخصصة */
     .main-card {
       border-radius: 1.5rem;
       overflow: hidden;
       backdrop-filter: blur(12px);
-      transition: all 0.3s;
+      transition: var(--transition-normal);
       transform: translateZ(0);
       max-width: 28rem;
       width: 100%;
@@ -56,95 +118,118 @@
     }
     
     .dark-mode .main-card {
-      background-color: rgba(26, 32, 44, 0.4);
+      background-color: var(--card-bg-dark);
       border: 1px solid rgba(74, 85, 104, 0.3);
+      box-shadow: var(--box-shadow);
     }
     
     .light-mode .main-card {
-      background-color: rgba(255, 255, 255, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background-color: var(--card-bg-light);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: var(--box-shadow);
     }
     
-    .dark-mode-toggle {
+    .theme-toggle {
       position: fixed;
       top: 1rem;
       right: 1rem;
       padding: 0.5rem;
       border-radius: 9999px;
       z-index: 50;
-      transition: all 0.3s;
+      transition: var(--transition-normal);
       backdrop-filter: blur(4px);
+      cursor: pointer;
     }
     
-    .dark-mode .dark-mode-toggle {
+    .dark-mode .theme-toggle {
       background-color: rgba(0, 0, 0, 0.2);
+      color: #f7fafc;
     }
     
-    .light-mode .dark-mode-toggle {
+    .light-mode .theme-toggle {
       background-color: rgba(255, 255, 255, 0.2);
+      color: #2d3748;
     }
-
-    /* Progress Bar */
+    
+    .dark-mode .glass-card {
+      background-color: rgba(45, 55, 72, 0.5);
+      border: 1px solid rgba(74, 85, 104, 0.3);
+    }
+    
+    .light-mode .glass-card {
+      background-color: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    /* شريط التقدم */
     .progress-bar {
       height: 0.5rem;
       border-radius: 0.5rem;
-      transition: all 0.3s ease-in-out;
+      transition: all 0.3s;
+      overflow: hidden;
     }
     
     .dark-mode .progress-bar {
-      background-color: #4a5568;
+      background-color: rgba(74, 85, 104, 0.5);
     }
     
     .light-mode .progress-bar {
-      background-color: #e2e8f0;
+      background-color: rgba(226, 232, 240, 0.5);
     }
     
     .progress-value {
       height: 100%;
       border-radius: 0.5rem;
-      transition: width 0.3s ease-in-out;
+      transition: width 0.3s;
     }
     
     .dark-mode .progress-value {
-      background-color: #5a67d8;
+      background-color: var(--primary-color);
     }
     
     .light-mode .progress-value {
-      background-color: #5a67d8;
+      background-color: var(--primary-color);
     }
-
-    /* Tabs */
-    .tab-list {
+    
+    /* التبويبات */
+    .tabs {
       display: flex;
       overflow: hidden;
-      border-radius: 0.375rem;
+      border-radius: 0.5rem;
       margin-bottom: 1rem;
+      background-color: transparent;
+      position: relative;
     }
     
     .tab {
       flex: 1;
-      padding: 0.5rem;
+      padding: 0.75rem 0.5rem;
       text-align: center;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: var(--transition-normal);
+      position: relative;
+      z-index: 1;
     }
     
-    .dark-mode .tab-list {
-      background-color: #2d3748;
+    .tab.active {
+      color: white;
+      font-weight: 600;
     }
     
-    .light-mode .tab-list {
-      background-color: #e2e8f0;
+    .tab-slider {
+      position: absolute;
+      height: 100%;
+      background-color: var(--primary-color);
+      border-radius: 0.5rem;
+      transition: all 0.3s ease;
     }
     
-    .dark-mode .tab.active {
-      background-color: #1a202c;
-      color: #fff;
+    .dark-mode .tabs {
+      border: 1px solid rgba(74, 85, 104, 0.3);
     }
     
-    .light-mode .tab.active {
-      background-color: #fff;
-      color: #1a202c;
+    .light-mode .tabs {
+      border: 1px solid rgba(226, 232, 240, 0.8);
     }
     
     .tab-panel {
@@ -155,24 +240,40 @@
       display: block;
       animation: fadeIn 0.3s ease-out forwards;
     }
-
-    /* Collapsible */
+    
+    /* القابل للطي */
+    .collapsible {
+      transition: var(--transition-normal);
+      border-radius: 0.75rem;
+    }
+    
+    .dark-mode .collapsible {
+      background-color: rgba(45, 55, 72, 0.5);
+      border: 1px solid rgba(74, 85, 104, 0.3);
+    }
+    
+    .light-mode .collapsible {
+      background-color: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    
     .collapsible-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 1rem;
       cursor: pointer;
+      font-weight: 600;
     }
     
     .collapsible-content {
       max-height: 0;
       overflow: hidden;
-      transition: max-height 0.3s ease-out;
+      transition: max-height 0.5s ease;
     }
     
     .collapsible-content.open {
-      max-height: 16rem; /* 64 in Tailwind */
+      max-height: 500px;
       overflow-y: auto;
     }
     
@@ -183,9 +284,271 @@
     .chevron.rotate {
       transform: rotate(180deg);
     }
-
-    /* Modal */
-    .modal-backdrop {
+    
+    /* قائمة تاريخ الملفات */
+    .file-history-list {
+      padding: 1rem;
+      list-style: none;
+    }
+    
+    .file-history-date {
+      font-weight: 600;
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+    }
+    
+    .file-history-date:first-child {
+      margin-top: 0;
+    }
+    
+    .pdf-button {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      transition: var(--transition-normal);
+      font-size: 0.875rem;
+    }
+    
+    .dark-mode .file-history-date {
+      color: var(--text-light);
+      border-bottom-color: rgba(74, 85, 104, 0.3);
+    }
+    
+    .dark-mode .pdf-button {
+      background-color: rgba(45, 55, 72, 0.8);
+      color: #f7fafc;
+    }
+    
+    .dark-mode .pdf-button:hover {
+      background-color: rgba(45, 55, 72, 1);
+    }
+    
+    .light-mode .file-history-date {
+      color: var(--text-dark);
+      border-bottom-color: rgba(226, 232, 240, 0.8);
+    }
+    
+    .light-mode .pdf-button {
+      background-color: rgba(226, 232, 240, 0.8);
+      color: var(--text-dark);
+    }
+    
+    .light-mode .pdf-button:hover {
+      background-color: rgba(226, 232, 240, 1);
+    }
+    
+    .pdf-button.pdf-certificate {
+      border-right: 3px solid var(--primary-color);
+    }
+    
+    .pdf-button.pdf-idcard {
+      border-right: 3px solid var(--secondary-color);
+    }
+    
+    .pdf-button.pdf-committee {
+      border-right: 3px solid var(--success-color);
+    }
+    
+    /* أزرار المتدرجة */
+    .btn-gradient-primary {
+      background-image: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      color: white;
+      transition: var(--transition-normal);
+      transform: translateZ(0);
+    }
+    
+    .btn-gradient-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    
+    .btn-gradient-success {
+      background-image: linear-gradient(135deg, var(--success-color) 0%, #38b2ac 100%);
+      color: white;
+      transition: var(--transition-normal);
+      transform: translateZ(0);
+    }
+    
+    .btn-gradient-success:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    
+    /* المدخلات المخصصة */
+    .input-custom {
+      transition: var(--transition-normal);
+      width: 100%;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      outline: none;
+    }
+    
+    .dark-mode .input-custom {
+      background-color: rgba(45, 55, 72, 0.8);
+      border: 1px solid rgba(74, 85, 104, 0.3);
+      color: white;
+    }
+    
+    .dark-mode .input-custom:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.3);
+    }
+    
+    .light-mode .input-custom {
+      background-color: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      color: var(--text-dark);
+    }
+    
+    .light-mode .input-custom:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.2);
+    }
+    
+    /* أزرار الإشعارات */
+    .toast {
+      position: fixed;
+      top: 4rem;
+      left: 1rem;
+      max-width: 24rem;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      transform: translateX(-150%);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      z-index: 100;
+      box-shadow: var(--box-shadow);
+      pointer-events: none;
+    }
+    
+    .toast.show {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .dark-mode .toast {
+      background-color: var(--card-bg-dark);
+      border: 1px solid rgba(74, 85, 104, 0.3);
+    }
+    
+    .light-mode .toast {
+      background-color: var(--card-bg-light);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    
+    .toast-success {
+      border-right: 4px solid var(--success-color);
+    }
+    
+    .toast-error {
+      border-right: 4px solid var(--error-color);
+    }
+    
+    .toast-warning {
+      border-right: 4px solid var(--warning-color);
+    }
+    
+    /* محمل الصورة */
+    .image-uploader {
+      position: relative;
+      border: 2px dashed;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition-normal);
+      overflow: hidden;
+    }
+    
+    .dark-mode .image-uploader {
+      border-color: rgba(74, 85, 104, 0.5);
+      background-color: rgba(45, 55, 72, 0.3);
+    }
+    
+    .dark-mode .image-uploader:hover {
+      border-color: var(--primary-color);
+      background-color: rgba(45, 55, 72, 0.5);
+    }
+    
+    .light-mode .image-uploader {
+      border-color: rgba(226, 232, 240, 0.8);
+      background-color: rgba(247, 250, 252, 0.5);
+    }
+    
+    .light-mode .image-uploader:hover {
+      border-color: var(--primary-color);
+      background-color: rgba(247, 250, 252, 0.8);
+    }
+    
+    .image-preview {
+      max-width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      border-radius: 0.5rem;
+    }
+    
+    .image-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: var(--transition-normal);
+      color: white;
+    }
+    
+    .image-uploader:hover .image-overlay {
+      opacity: 1;
+    }
+    
+    /* اختيار الجنس */
+    .gender-selector {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .gender-option {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition-normal);
+      font-weight: 500;
+    }
+    
+    .dark-mode .gender-option {
+      background-color: rgba(45, 55, 72, 0.8);
+      border: 1px solid rgba(74, 85, 104, 0.3);
+    }
+    
+    .dark-mode .gender-option.active {
+      background-color: rgba(90, 103, 216, 0.2);
+      border-color: var(--primary-color);
+    }
+    
+    .light-mode .gender-option {
+      background-color: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    
+    .light-mode .gender-option.active {
+      background-color: rgba(90, 103, 216, 0.1);
+      border-color: var(--primary-color);
+    }
+    
+    /* المودال */
+    .modal {
       position: fixed;
       top: 0;
       left: 0;
@@ -197,354 +560,632 @@
       justify-content: center;
       z-index: 100;
       opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
+      visibility: hidden;
+      transition: all 0.3s;
     }
     
-    .modal-backdrop.open {
+    .modal.open {
       opacity: 1;
-      pointer-events: auto;
+      visibility: visible;
     }
     
     .modal-content {
-      background-color: white;
-      border-radius: 0.5rem;
       max-width: 90%;
       width: 28rem;
+      border-radius: 1rem;
+      transition: all 0.3s;
       transform: scale(0.95);
-      transition: transform 0.3s;
+      max-height: 90vh;
+      overflow-y: auto;
     }
     
-    .modal-backdrop.open .modal-content {
+    .modal.open .modal-content {
       transform: scale(1);
     }
     
     .dark-mode .modal-content {
-      background-color: #1a202c;
+      background-color: var(--card-bg-dark);
+      border: 1px solid rgba(74, 85, 104, 0.3);
       color: white;
+    }
+    
+    .light-mode .modal-content {
+      background-color: var(--card-bg-light);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      color: var(--text-dark);
+    }
+    
+    /* شاشة PDF */
+    .pdf-viewer {
+      position: relative;
+      width: 100%;
+      height: 0;
+      padding-bottom: 56.25%; /* نسبة العرض إلى الارتفاع 16:9 */
+      overflow: hidden;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .pdf-iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    /* مؤثرات الأزرار */
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-icon svg {
+      transition: transform 0.3s;
+    }
+    
+    .btn-icon:hover svg {
+      transform: translateY(-2px);
+    }
+    
+    /* عناصر لوتي المتحركة */
+    .lottie-container {
+      width: 100%;
+      height: 200px;
+      margin: 1rem auto;
+    }
+    
+    /* المؤثرات البصرية */
+    .hover-lift {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .hover-lift:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.05);
+    }
+    
+    .shine-effect {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .shine-effect::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: rotate(30deg);
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    
+    .shine-effect:hover::after {
+      opacity: 1;
+      animation: shine 1.5s ease-out;
+    }
+    
+    @keyframes shine {
+      0% {
+        transform: scale(0) rotate(30deg);
+        opacity: 0;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        transform: scale(2) rotate(30deg);
+        opacity: 0;
+      }
+    }
+    
+    .skeleton-loading {
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.2),
+        rgba(255, 255, 255, 0.1)
+      );
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite linear;
+      border-radius: 0.25rem;
+    }
+    
+    @keyframes skeleton-loading {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
     }
   </style>
 </head>
 <body class="light-mode min-h-screen flex items-center justify-center p-4">
-  <!-- Particles Background -->
+  <!-- خلفية الجزيئات -->
   <div id="particles" class="absolute inset-0 z-0"></div>
   
-  <!-- Dark Mode Toggle -->
-  <button id="darkModeToggle" class="dark-mode-toggle" aria-label="تفعيل الوضع الليلي">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-700">
+  <!-- زر تبديل الوضع الداكن/المضيء -->
+  <div id="themeToggle" class="theme-toggle" aria-label="تبديل المظهر">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="moon">
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
     </svg>
-  </button>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sun hidden">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </div>
   
-  <!-- Main Card -->
-  <div class="main-card shadow-2xl z-10">
-    <!-- Banner Image -->
-    <div class="w-full h-32 relative overflow-hidden">
+  <!-- البطاقة الرئيسية -->
+  <div class="main-card z-10 shadow-lg">
+    <!-- صورة الغلاف -->
+    <div class="w-full h-40 relative overflow-hidden">
       <img 
-        src="https://i.ibb.co/sJXfcDHM/3a4c72ac-fd79-4a6f-86d8-96031eec8209.jpg" 
-        alt="Banner" 
-        class="w-full h-full object-cover"
+        src="https://cdn.pixabay.com/photo/2018/03/13/11/26/education-3222267_1280.jpg" 
+        alt="صورة الغلاف" 
+        class="w-full h-full object-cover filter brightness-50"
+        onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100%\' height=\'100%\' viewBox=\'0 0 800 400\'><rect fill=\'%235A67D8\' width=\'800\' height=\'400\'/><path fill=\'%23fff\' opacity=\'0.1\' d=\'M150 150 H650 V250 H150 Z\'/></svg>';"
       />
-      <div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/40"></div>
+      <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+        <h1 class="text-3xl font-bold mb-2 text-shadow">نظام التسجيل</h1>
+        <div class="w-16 h-1 bg-primary rounded-full"></div>
+      </div>
     </div>
     
     <div class="p-8 md:p-10">
-      <!-- Progress Bar (initially hidden) -->
-      <div id="loadingProgress" class="mb-6 space-y-4 animate-fade-in" style="display: none;">
-        <div class="flex justify-between text-sm font-medium">
-          <span id="progressText" class="text-gray-600"></span>
-          <span id="progressPercentage" class="text-indigo-600">0%</span>
+      <!-- شريط التقدم (مخفي بداية) -->
+      <div id="progressContainer" class="mb-6 space-y-3 animate-fade-in hidden">
+        <div class="flex justify-between items-center text-sm">
+          <span id="progressText" class="font-medium"></span>
+          <span id="progressPercentage" class="font-bold text-primary"></span>
         </div>
         <div class="progress-bar">
-          <div id="progressValue" class="progress-value" style="width: 0%;"></div>
+          <div id="progressValue" class="progress-value" style="width: 0%"></div>
         </div>
-        <div id="wisdomQuote" class="text-center text-sm italic text-gray-600 animate-fade-in"></div>
+        <div id="loadingQuote" class="text-center text-sm italic opacity-80 animate-fade-in"></div>
       </div>
       
-      <!-- Key Step (initial view) -->
+      <!-- خطوة إدخال المفتاح (العرض الأولي) -->
       <div id="keyStep" class="space-y-6 animate-fade-in">
-        <h1 class="text-3xl font-bold text-center text-indigo-600 mb-8">
-          مرحبًا بك في نظام التسجيل
-        </h1>
+        <div class="text-center">
+          <h2 class="text-2xl font-bold text-primary mb-2">مرحبًا بك في نظام التسجيل</h2>
+          <p class="text-sm opacity-80">الرجاء إدخال مفتاح الوصول الخاص بك للمتابعة</p>
+        </div>
         
         <div class="space-y-4">
           <input
             type="text"
             id="accessKey"
             placeholder="أدخل مفتاح الوصول"
-            class="w-full px-4 py-3 rounded-lg bg-white text-gray-700 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+            class="input-custom"
           />
           
           <button
             id="validateKeyButton"
-            class="w-full py-3 rounded-lg font-bold bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+            class="w-full py-3 rounded-lg font-bold btn-gradient-primary hover-lift shine-effect"
           >
-            تأكيد المفتاح
+            <span class="btn-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                <polyline points="10 17 15 12 10 7"></polyline>
+                <line x1="15" y1="12" x2="3" y2="12"></line>
+              </svg>
+              تأكيد المفتاح
+            </span>
           </button>
           
-          <div id="errorMsg" class="text-red-500 bg-red-100 border border-red-200 rounded-lg p-3 text-sm" style="display: none;"></div>
+          <div id="keyError" class="bg-red-100 border-r-4 border-red-500 rounded-lg p-3 text-red-700 text-sm hidden">
+            <div class="flex">
+              <svg class="mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span id="keyErrorText"></span>
+            </div>
+          </div>
         </div>
+        
+        <!-- عنصر التحميل (لوتي) -->
+        <div id="keyLoadingAnimation" class="lottie-container hidden"></div>
       </div>
       
-      <!-- Form Step (hidden initially) -->
-      <div id="formStep" class="space-y-6 animate-fade-in" style="display: none;">
-        <h2 class="text-2xl font-bold text-center text-red-500">
-          استمارة التسجيل
-        </h2>
+      <!-- خطوة النموذج (مخفية بداية) -->
+      <div id="formStep" class="space-y-6 animate-fade-in hidden">
+        <div class="text-center">
+          <h2 id="rankLabel" class="text-2xl font-bold text-primary mb-2">استمارة التسجيل</h2>
+          <p id="rankDescription" class="text-sm opacity-80 mb-6"></p>
+        </div>
         
         <div class="space-y-4">
           <input
             type="text"
             id="fullName"
             placeholder="الاسم الكامل"
-            class="w-full px-4 py-3 rounded-lg bg-white text-gray-700 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+            class="input-custom"
           />
           
           <div id="rankSpecificFields" class="space-y-4">
-            <!-- Will be dynamically populated based on user rank -->
+            <!-- سيتم ملؤها ديناميكيًا بناءً على رتبة المستخدم -->
           </div>
           
           <button
             id="submitFormButton"
-            class="w-full py-3 rounded-lg font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+            class="w-full py-3 rounded-lg font-bold btn-gradient-success hover-lift shine-effect"
           >
-            إرسال البيانات
+            <span class="btn-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              إرسال البيانات
+            </span>
           </button>
           
-          <!-- File History Collapsible (hidden initially) -->
-          <div id="fileHistoryCollapsible" class="mt-4 rounded-lg overflow-hidden transition-all bg-white/80 border border-gray-200" style="display: none;">
-            <div class="collapsible-header">
-              <span class="font-medium">سجل الملفات السابقة</span>
-              <svg class="chevron w-5 h-5 transition-transform" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </div>
-            <div class="collapsible-content">
-              <div id="previousFilesContainer" class="p-4 space-y-4 divide-y divide-gray-200">
-                <!-- Will be populated with previous files -->
+          <!-- قسم سجل الملفات السابقة (مخفي بداية) -->
+          <div id="fileHistorySection" class="mt-6 hidden">
+            <div class="collapsible">
+              <div class="collapsible-header">
+                <span>سجل الملفات السابقه</span>
+                <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+              <div class="collapsible-content">
+                <ul id="fileHistoryList" class="file-history-list">
+                  <!-- سيتم ملؤها ديناميكيًا بسجلات الملفات السابقة -->
+                </ul>
               </div>
             </div>
           </div>
         </div>
+        
+        <!-- عنصر التحميل (لوتي) -->
+        <div id="formLoadingAnimation" class="lottie-container hidden"></div>
       </div>
       
-      <!-- Result Step (hidden initially) -->
-      <div id="resultStep" class="space-y-6 animate-fade-in" style="display: none;">
+      <!-- خطوة النتيجة (مخفية بداية) -->
+      <div id="resultStep" class="space-y-6 animate-fade-in hidden">
         <div class="text-center">
+          <div class="inline-block p-3 rounded-full bg-green-100 text-green-500 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
           <h2 class="text-xl font-bold mb-2 text-green-600">
             تم إنشاء الملفات بنجاح
           </h2>
-          <p id="resultGreeting" class="text-gray-600 mb-6">
-            مرحباً بك، تم إنشاء الملفات التالية
-          </p>
+          <p id="resultGreeting" class="opacity-80 mb-6"></p>
         </div>
         
-        <div id="resultTabs">
-          <div class="tab-list" id="tabsList">
-            <!-- Will be populated with tabs -->
+        <!-- تبويبات PDF -->
+        <div>
+          <div class="tabs mb-6" id="pdfTabs">
+            <div class="tab-slider" style="width: 33.33%; left: 0;"></div>
+            <!-- سيتم إضافة تبويبات بشكل ديناميكي -->
           </div>
           
-          <div id="tabPanels">
-            <!-- Will be populated with tab panels -->
+          <div id="pdfTabPanels">
+            <!-- سيتم إضافة محتوى التبويبات بشكل ديناميكي -->
           </div>
         </div>
         
         <button
           id="restartButton"
-          class="w-full py-3 rounded-lg font-bold bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+          class="w-full py-3 rounded-lg font-bold btn-gradient-primary hover-lift shine-effect"
         >
-          العودة للبداية
+          <span class="btn-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <polyline points="23 20 23 14 17 14"></polyline>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            العودة للبداية
+          </span>
         </button>
       </div>
     </div>
   </div>
   
-  <!-- Toast Notification -->
-  <div id="toast" class="fixed top-4 left-4 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg p-4 transition-all duration-300 transform -translate-x-full opacity-0 z-50">
-    <div class="flex items-center">
-      <div id="toastIcon" class="flex-shrink-0 w-6 h-6 mr-3"></div>
-      <div>
-        <div id="toastTitle" class="font-semibold"></div>
-        <div id="toastMessage" class="text-sm text-gray-600"></div>
+  <!-- إشعار التنبيه -->
+  <div id="toast" class="toast">
+    <div class="flex items-start">
+      <div id="toastIcon" class="flex-shrink-0 mr-2 mt-0.5">
+        <!-- سيتم تعبئته ديناميكيًا -->
+      </div>
+      <div class="flex-1">
+        <h3 id="toastTitle" class="font-bold mb-1"></h3>
+        <p id="toastMessage" class="text-sm opacity-80"></p>
+      </div>
+      <button id="toastClose" class="ml-4 text-gray-500 hover:text-gray-700 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- المودال - عارض PDF -->
+  <div id="pdfViewerModal" class="modal">
+    <div class="modal-content p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 id="pdfModalTitle" class="text-xl font-bold"></h3>
+        <button id="pdfModalClose" class="text-gray-500 hover:text-gray-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div id="pdfModalContent" class="h-96 mb-4">
+        <iframe id="pdfModalIframe" class="w-full h-full border-0 rounded"></iframe>
+      </div>
+      <div class="flex justify-between">
+        <button id="pdfModalDownload" class="px-4 py-2 rounded-lg bg-primary text-white flex items-center space-x-2 hover-lift">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>تنزيل الملف</span>
+        </button>
+        <button id="pdfModalOpenNew" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 flex items-center space-x-2 hover-lift">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+          <span>فتح في نافذة جديدة</span>
+        </button>
       </div>
     </div>
   </div>
   
   <script>
-    // Application state
+    // حالة التطبيق
     const appState = {
-      isDarkMode: window.matchMedia('(prefers-color-scheme: dark)').matches,
+      isDarkMode: window.matchMedia('(prefers-color-scheme: dark)').matches, // الوضع الداكن/المضيء
       currentStep: 'key', // key, form, result
       accessKey: '',
       fullName: '',
       teamNumber: '',
       serialNumber: '',
-      gender: '',
-      userRank: '',
-      isKeyUsed: false,
+      gender: '', // قائد أو قائدة
+      userRank: '', // رتبة المستخدم: قائد، لجان، كشاف
+      rankLabel: '', // النص الوصفي للرتبة
       photoFile: null,
       photoPreview: '',
-      results: null,
-      previousFiles: [],
-      isCollapsibleOpen: false,
-      activeTab: 'pdf1',
-      isLoading: false,
+      results: null, // نتائج إنشاء PDF
+      previousFiles: [], // سجل الملفات السابقة
+      isCollapsibleOpen: false, // حالة القسم القابل للطي
+      activePdfTab: 'pdf1', // التبويب النشط
+      isLoading: false, // حالة التحميل
+      progressInterval: null, // فاصل تقدم التحميل
+      progressQuoteInterval: null, // فاصل اقتباسات التحميل
       
-      // Toast state
-      toastTimeoutId: null
+      // حالة الإشعارات
+      toastTimeout: null
     };
+
+    // اقتباسات الحكمة للعرض أثناء التحميل
+    const wisdomQuotes = [
+      "الصبر مفتاح الفرج",
+      "من جدّ وجد ومن زرع حصد",
+      "العلم نور والجهل ظلام",
+      "خير الأمور أوسطها",
+      "من سار على الدرب وصل",
+      "اطلب العلم من المهد إلى اللحد",
+      "القناعة كنز لا يفنى",
+      "الوقت كالسيف إن لم تقطعه قطعك"
+    ];
     
-    // Utility functions
+    // وظائف مساعدة
     const utils = {
+      // الحصول على عنصر DOM
       getElement: (id) => document.getElementById(id),
       
+      // إظهار عنصر
       showElement: (id) => {
         const element = utils.getElement(id);
-        if (element) element.style.display = '';
+        if (element) {
+          element.classList.remove('hidden');
+        }
       },
       
+      // إخفاء عنصر
       hideElement: (id) => {
         const element = utils.getElement(id);
-        if (element) element.style.display = 'none';
+        if (element) {
+          element.classList.add('hidden');
+        }
       },
       
+      // تعيين محتوى نصي لعنصر
       setTextContent: (id, text) => {
         const element = utils.getElement(id);
-        if (element) element.textContent = text;
+        if (element) {
+          element.textContent = text;
+        }
       },
       
+      // عرض إشعار
       showToast: (title, message, type = 'success') => {
-        const toast = utils.getElement('toast');
-        const toastTitle = utils.getElement('toastTitle');
-        const toastMessage = utils.getElement('toastMessage');
+        // تعيين محتوى الإشعار
+        utils.setTextContent('toastTitle', title);
+        utils.setTextContent('toastMessage', message);
+        
+        // تعيين أيقونة الإشعار حسب النوع
         const toastIcon = utils.getElement('toastIcon');
+        const toast = utils.getElement('toast');
         
-        toastTitle.textContent = title;
-        toastMessage.textContent = message;
-        
-        // Set icon based on type
-        let iconSvg = '';
+        // إزالة جميع فئات الأنواع
+        toast.classList.remove('toast-success', 'toast-error', 'toast-warning');
         
         if (type === 'success') {
-          iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="text-green-500" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+          toastIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+          toast.classList.add('toast-success');
         } else if (type === 'error') {
-          iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="text-red-500" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+          toastIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+          toast.classList.add('toast-error');
+        } else if (type === 'warning') {
+          toastIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+          toast.classList.add('toast-warning');
         }
         
-        toastIcon.innerHTML = iconSvg;
+        // إظهار الإشعار
+        toast.classList.add('show');
         
-        // Show the toast
-        toast.classList.remove('-translate-x-full', 'opacity-0');
-        toast.classList.add('translate-x-0', 'opacity-100');
-        
-        // Clear previous timeout if any
-        if (appState.toastTimeoutId) {
-          clearTimeout(appState.toastTimeoutId);
+        // إذا كان هناك مؤقت نشط، قم بمسحه
+        if (appState.toastTimeout) {
+          clearTimeout(appState.toastTimeout);
         }
         
-        // Hide after 5 seconds
-        appState.toastTimeoutId = setTimeout(() => {
-          toast.classList.add('-translate-x-full', 'opacity-0');
-          toast.classList.remove('translate-x-0', 'opacity-100');
+        // إخفاء الإشعار بعد 5 ثوانٍ
+        appState.toastTimeout = setTimeout(() => {
+          toast.classList.remove('show');
         }, 5000);
       },
       
-      applyDarkMode: (isDark) => {
+      // تطبيق الوضع الداكن/المضيء
+      applyTheme: (isDark) => {
         const body = document.body;
-        const toggle = utils.getElement('darkModeToggle');
+        const themeToggle = utils.getElement('themeToggle');
+        const moonIcon = themeToggle.querySelector('.moon');
+        const sunIcon = themeToggle.querySelector('.sun');
         
         if (isDark) {
           body.classList.remove('light-mode');
           body.classList.add('dark-mode');
-          
-          toggle.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-300">
-              <circle cx="12" cy="12" r="5"></circle>
-              <line x1="12" y1="1" x2="12" y2="3"></line>
-              <line x1="12" y1="21" x2="12" y2="23"></line>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-              <line x1="1" y1="12" x2="3" y2="12"></line>
-              <line x1="21" y1="12" x2="23" y2="12"></line>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-            </svg>
-          `;
-          toggle.setAttribute('aria-label', 'تفعيل الوضع النهاري');
+          moonIcon.classList.add('hidden');
+          sunIcon.classList.remove('hidden');
+          themeToggle.setAttribute('aria-label', 'تفعيل الوضع المضيء');
         } else {
           body.classList.remove('dark-mode');
           body.classList.add('light-mode');
-          
-          toggle.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-700">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-            </svg>
-          `;
-          toggle.setAttribute('aria-label', 'تفعيل الوضع الليلي');
+          moonIcon.classList.remove('hidden');
+          sunIcon.classList.add('hidden');
+          themeToggle.setAttribute('aria-label', 'تفعيل الوضع الداكن');
         }
         
-        // Update particles colors
+        // تحديث ألوان جزيئات الخلفية
         if (window.pJSDom && window.pJSDom.length > 0) {
-          const particles = window.pJSDom[0].pJS.particles;
-          particles.color.value = isDark ? '#ffffff' : '#6366f1';
-          particles.line_linked.color = isDark ? '#ffffff' : '#6366f1';
-          window.pJSDom[0].pJS.fn.particlesRefresh();
+          try {
+            const particlesJS = window.pJSDom[0].pJS;
+            particlesJS.particles.color.value = isDark ? '#fff' : '#5a67d8';
+            particlesJS.particles.line_linked.color = isDark ? '#fff' : '#5a67d8';
+            particlesJS.fn.particlesRefresh();
+          } catch (error) {
+            console.error('خطأ في تحديث جزيئات الخلفية:', error);
+          }
         }
       },
       
+      // إعداد جزيئات الخلفية
       setupParticles: () => {
-        window.particlesJS('particles', {
-          particles: {
-            number: { value: 80 },
-            color: { value: appState.isDarkMode ? '#ffffff' : '#6366f1' },
-            opacity: { value: 0.2 },
-            size: { value: 3 },
-            move: {
-              enable: true,
-              speed: 1,
-              direction: "none",
-              random: true,
-              straight: false,
-              out_mode: "out",
-              bounce: false,
-            },
-            line_linked: {
-              enable: true,
-              distance: 150,
-              color: appState.isDarkMode ? '#ffffff' : '#6366f1',
-              opacity: 0.1,
-              width: 1
-            },
-          },
-          interactivity: {
-            detect_on: "canvas",
-            events: {
-              onhover: {
+        if (window.particlesJS) {
+          window.particlesJS('particles', {
+            particles: {
+              number: { value: 60, density: { enable: true, value_area: 800 } },
+              color: { value: appState.isDarkMode ? '#ffffff' : '#5a67d8' },
+              shape: { type: 'circle' },
+              opacity: { value: 0.2, random: true },
+              size: { value: 3, random: true },
+              line_linked: {
                 enable: true,
-                mode: "grab"
+                distance: 150,
+                color: appState.isDarkMode ? '#ffffff' : '#5a67d8',
+                opacity: 0.1,
+                width: 1
               },
-              resize: true
+              move: {
+                enable: true,
+                speed: 1,
+                direction: 'none',
+                random: true,
+                straight: false,
+                out_mode: 'out',
+                bounce: false,
+              }
             },
-          },
-        });
+            interactivity: {
+              detect_on: 'canvas',
+              events: {
+                onhover: { enable: true, mode: 'grab' },
+                resize: true
+              },
+              modes: {
+                grab: { distance: 140, line_linked: { opacity: 0.4 } }
+              }
+            },
+            retina_detect: true
+          });
+        }
       },
       
-      formatDate: (date) => {
-        const d = new Date(date);
-        return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
+      // تنسيق التاريخ
+      formatDate: (dateStr) => {
+        try {
+          // معالجة سلاسل التاريخ العربية
+          const cleanDateStr = dateStr.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+          const date = new Date(cleanDateStr);
+          
+          // التحقق من صحة التاريخ
+          if (isNaN(date.getTime())) {
+            return dateStr; // إذا كان التاريخ غير صالح، إرجاع السلسلة الأصلية
+          }
+          
+          // خيارات تنسيق التاريخ العربي
+          const options = { 
+            year: 'numeric', 
+            month: 'numeric', 
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true
+          };
+          
+          return new Date(date).toLocaleDateString('ar-SA', options);
+        } catch (error) {
+          console.error('خطأ في تنسيق التاريخ:', error);
+          return dateStr; // إرجاع السلسلة الأصلية في حالة حدوث خطأ
+        }
       },
       
+      // تنزيل ملف PDF
       downloadPDF: (url, filename) => {
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', filename);
-        link.setAttribute('target', '_blank');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+          // إنشاء عنصر رابط وهمي للتنزيل
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', filename || 'document.pdf');
+          link.setAttribute('target', '_blank');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } catch (error) {
+          console.error('خطأ في تنزيل PDF:', error);
+          utils.showToast('خطأ في التنزيل', 'حدث خطأ أثناء محاولة تنزيل الملف', 'error');
+        }
       },
       
-      getTabName: (tabKey) => {
+      // الحصول على اسم تبويب PDF
+      getPdfTabName: (tabKey) => {
         switch (tabKey) {
           case "pdf1": return "الشهادة";
           case "pdf2": return "البطاقة";
@@ -553,27 +1194,22 @@
         }
       },
       
-      getAvailableTabs: (pdfs) => {
-        if (!pdfs) return [];
+      // الحصول على التبويبات المتاحة حسب نتائج PDF
+      getAvailablePdfTabs: (results) => {
+        if (!results) return [];
         
         const tabs = [];
-        if (pdfs.pdf1) tabs.push("pdf1");
-        if (pdfs.pdf2) tabs.push("pdf2");
-        if (pdfs.pdf3) tabs.push("pdf3");
+        if (results.pdf1) tabs.push("pdf1");
+        if (results.pdf2) tabs.push("pdf2");
+        if (results.pdf3) tabs.push("pdf3");
         
         return tabs;
       },
       
-      createPhotoUploader: (photoPreview, isDarkMode) => {
+      // إنشاء مكون تحميل الصور
+      createImageUploader: (photoPreview = '', isDark = false) => {
         return `
-          <div 
-            id="photoUploader" 
-            class="${
-              isDarkMode 
-                ? 'border-gray-600 hover:border-indigo-400 bg-gray-800/50' 
-                : 'border-gray-300 hover:border-indigo-400 bg-gray-50/80'
-            } relative cursor-pointer border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all ${photoPreview ? 'h-56' : 'h-36'}"
-          >
+          <div class="image-uploader ${photoPreview ? 'h-48' : 'h-32'}">
             <input
               id="photoInput"
               type="file"
@@ -586,187 +1222,252 @@
                 <img 
                   src="${photoPreview}" 
                   alt="معاينة الصورة" 
-                  class="w-full h-full object-contain rounded"
+                  class="image-preview"
                 />
-                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded">
-                  <div class="text-white text-center">
-                    <p>انقر لتغيير الصورة</p>
+                <div class="image-overlay rounded">
+                  <div class="text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2">
+                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                    </svg>
+                    <p>تغيير الصورة</p>
                   </div>
                 </div>
               </div>
             ` : `
-              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-2">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
                 <polyline points="21 15 16 10 5 21"></polyline>
               </svg>
-              <span class="${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm">انقر لاختيار صورة</span>
-              <span class="${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs mt-1">يجب أن لا يتجاوز حجم الصورة 20 ميجابايت</span>
+              <p class="text-sm">انقر لاختيار صورة</p>
+              <p class="text-xs mt-1 opacity-70">يجب أن لا يتجاوز حجم الصورة 20 ميجابايت</p>
             `}
           </div>
         `;
       },
       
+      // تعيين حالة التحميل
       setLoading: (isLoading) => {
         appState.isLoading = isLoading;
         
         if (isLoading) {
-          utils.showElement('loadingProgress');
+          // إظهار شريط التقدم
+          utils.showElement('progressContainer');
           
-          // Disable form elements
-          const inputs = document.querySelectorAll('input, button:not(#darkModeToggle)');
-          inputs.forEach(input => {
-            input.disabled = true;
+          // تعطيل عناصر النموذج
+          document.querySelectorAll('button:not(#themeToggle), input').forEach(el => {
+            el.disabled = true;
           });
           
-          // Start progress animation
-          startProgress();
+          // بدء رسوم التحميل المتحركة
+          utils.startProgressAnimation();
+          
+          // عرض عناصر تحميل لوتي المناسبة
+          if (appState.currentStep === 'key') {
+            utils.showElement('keyLoadingAnimation');
+          } else if (appState.currentStep === 'form') {
+            utils.showElement('formLoadingAnimation');
+          }
         } else {
-          utils.hideElement('loadingProgress');
+          // إخفاء شريط التقدم
+          utils.hideElement('progressContainer');
           
-          // Enable form elements
-          const inputs = document.querySelectorAll('input, button:not(#darkModeToggle)');
-          inputs.forEach(input => {
-            input.disabled = false;
+          // تمكين عناصر النموذج
+          document.querySelectorAll('button:not(#themeToggle), input').forEach(el => {
+            el.disabled = false;
           });
           
-          // Reset progress
-          utils.setTextContent('progressText', '');
-          utils.setTextContent('progressPercentage', '0%');
-          utils.setTextContent('wisdomQuote', '');
-          const progressValue = utils.getElement('progressValue');
-          if (progressValue) progressValue.style.width = '0%';
+          // إيقاف رسوم التحميل المتحركة
+          utils.stopProgressAnimation();
           
-          // Clear existing intervals if any
-          if (progressInterval) clearInterval(progressInterval);
-          if (quoteInterval) clearInterval(quoteInterval);
+          // إخفاء عناصر تحميل لوتي
+          utils.hideElement('keyLoadingAnimation');
+          utils.hideElement('formLoadingAnimation');
         }
+      },
+      
+      // إنشاء رسوم لوتي المتحركة
+      setupLottieAnimations: () => {
+        // رسوم لوتي للتحميل في خطوة المفتاح
+        const keyLoadingAnimation = lottie.loadAnimation({
+          container: utils.getElement('keyLoadingAnimation'),
+          renderer: 'svg',
+          loop: true,
+          autoplay: false,
+          path: 'https://assets10.lottiefiles.com/packages/lf20_usmfx6bp.json' // مسار ملف التحميل الدائري
+        });
+        
+        // رسوم لوتي للتحميل في خطوة النموذج
+        const formLoadingAnimation = lottie.loadAnimation({
+          container: utils.getElement('formLoadingAnimation'),
+          renderer: 'svg',
+          loop: true,
+          autoplay: false,
+          path: 'https://assets10.lottiefiles.com/packages/lf20_yf1qwmi4.json' // مسار ملف تحميل البيانات
+        });
+        
+        // حفظ مراجع الرسوم المتحركة في الحالة
+        appState.animations = {
+          keyLoading: keyLoadingAnimation,
+          formLoading: formLoadingAnimation
+        };
       }
     };
     
-    // Progress timer functions
-    let progressInterval;
-    let quoteInterval;
-    
-    function startProgress() {
-      const wisdomQuotes = [
-        "الصبر مفتاح الفرج",
-        "من جدّ وجد",
-        "العلم نور",
-        "خير الأمور أوسطها",
-        "من سار على الدرب وصل",
-        "اطلب العلم من المهد إلى اللحد",
-        "من صبر ظفر"
-      ];
-      
+    // وظائف رسوم شريط التقدم المتحركة
+    function startProgressAnimation() {
       let progress = 0;
       let quoteIndex = 0;
       
+      // تعيين النص الأولي
       utils.setTextContent('progressText', 'جاري التحميل...');
-      utils.setTextContent('wisdomQuote', wisdomQuotes[0]);
+      utils.setTextContent('progressPercentage', '0%');
+      utils.setTextContent('loadingQuote', wisdomQuotes[0]);
       
-      // Clear existing intervals if any
-      if (progressInterval) clearInterval(progressInterval);
-      if (quoteInterval) clearInterval(quoteInterval);
+      // مسح الفواصل الموجودة إذا وجدت
+      if (appState.progressInterval) clearInterval(appState.progressInterval);
+      if (appState.progressQuoteInterval) clearInterval(appState.progressQuoteInterval);
       
-      // Start quote rotation
-      quoteInterval = setInterval(() => {
+      // بدء تدوير الاقتباسات
+      appState.progressQuoteInterval = setInterval(() => {
         quoteIndex = (quoteIndex + 1) % wisdomQuotes.length;
-        utils.setTextContent('wisdomQuote', wisdomQuotes[quoteIndex]);
+        utils.setTextContent('loadingQuote', wisdomQuotes[quoteIndex]);
       }, 3000);
       
-      // Start progress animation
-      progressInterval = setInterval(() => {
+      // بدء رسوم شريط التقدم المتحركة
+      appState.progressInterval = setInterval(() => {
         if (progress >= 90) {
-          clearInterval(progressInterval);
+          clearInterval(appState.progressInterval);
           return;
         }
         
-        const nextStep = progress + (10 - progress / 10);
+        const nextStep = progress + (Math.random() * 5) + (10 - progress / 10);
+        progress = Math.min(nextStep, 90);
         
-        // Update progress text based on progress value
-        if (nextStep > 75) {
+        // تحديث نص التقدم بناءً على قيمة التقدم
+        if (progress > 80) {
           utils.setTextContent('progressText', 'جاري إنشاء الملفات...');
-        } else if (nextStep > 50) {
+        } else if (progress > 60) {
           utils.setTextContent('progressText', 'جاري معالجة البيانات...');
-        } else if (nextStep > 25) {
+        } else if (progress > 30) {
           utils.setTextContent('progressText', 'جاري التحقق من المعلومات...');
         }
         
-        progress = nextStep;
         utils.setTextContent('progressPercentage', `${Math.round(progress)}%`);
         
         const progressValue = utils.getElement('progressValue');
-        if (progressValue) progressValue.style.width = `${progress}%`;
+        if (progressValue) {
+          progressValue.style.width = `${progress}%`;
+        }
+        
+        // تشغيل رسوم لوتي المتحركة المناسبة
+        if (appState.animations) {
+          if (appState.currentStep === 'key' && appState.animations.keyLoading) {
+            appState.animations.keyLoading.play();
+          } else if (appState.currentStep === 'form' && appState.animations.formLoading) {
+            appState.animations.formLoading.play();
+          }
+        }
       }, 300);
     }
     
-    function stopProgress() {
-      if (progressInterval) clearInterval(progressInterval);
-      if (quoteInterval) clearInterval(quoteInterval);
+    function stopProgressAnimation() {
+      // مسح الفواصل الزمنية
+      if (appState.progressInterval) clearInterval(appState.progressInterval);
+      if (appState.progressQuoteInterval) clearInterval(appState.progressQuoteInterval);
       
-      // Set progress to 100%
+      // ضبط التقدم إلى 100%
       utils.setTextContent('progressPercentage', '100%');
-      utils.setTextContent('progressText', 'اكتمل التحميل!');
-      const progressValue = utils.getElement('progressValue');
-      if (progressValue) progressValue.style.width = '100%';
+      utils.setTextContent('progressText', 'اكتمل!');
       
-      // Hide progress after a short delay
+      const progressValue = utils.getElement('progressValue');
+      if (progressValue) {
+        progressValue.style.width = '100%';
+      }
+      
+      // إيقاف رسوم لوتي المتحركة
+      if (appState.animations) {
+        if (appState.currentStep === 'key' && appState.animations.keyLoading) {
+          appState.animations.keyLoading.stop();
+        } else if (appState.currentStep === 'form' && appState.animations.formLoading) {
+          appState.animations.formLoading.stop();
+        }
+      }
+      
+      // إخفاء شريط التقدم بعد تأخير قصير
       setTimeout(() => {
-        utils.hideElement('loadingProgress');
+        utils.hideElement('progressContainer');
         
-        // Reset progress for next time
+        // إعادة تعيين التقدم للمرة القادمة
         setTimeout(() => {
           utils.setTextContent('progressText', '');
           utils.setTextContent('progressPercentage', '0%');
-          utils.setTextContent('wisdomQuote', '');
-          if (progressValue) progressValue.style.width = '0%';
+          utils.setTextContent('loadingQuote', '');
+          if (progressValue) {
+            progressValue.style.width = '0%';
+          }
         }, 200);
       }, 500);
     }
     
-    // Step Switching Functions
+    // وظائف تبديل الخطوات
     function showStep(step) {
+      // تعيين الخطوة الحالية
       appState.currentStep = step;
       
-      // Hide all steps
+      // إخفاء جميع الخطوات
       utils.hideElement('keyStep');
       utils.hideElement('formStep');
       utils.hideElement('resultStep');
       
-      // Show requested step
+      // إظهار الخطوة المطلوبة
       utils.showElement(`${step}Step`);
+      
+      // إجراءات إضافية حسب الخطوة
+      if (step === 'form') {
+        renderFormStep();
+      } else if (step === 'result') {
+        renderResultStep();
+      }
     }
     
-    // API Interaction Functions
+    // وظائف التفاعل مع واجهة برمجة التطبيقات
     async function validateKey() {
+      // الحصول على قيمة مفتاح الوصول
       const accessKeyInput = utils.getElement('accessKey');
       const key = accessKeyInput.value.trim();
       
+      // التحقق من إدخال المفتاح
       if (!key) {
-        utils.showElement('errorMsg');
-        utils.setTextContent('errorMsg', 'الرجاء إدخال مفتاح الوصول');
+        utils.showElement('keyError');
+        utils.setTextContent('keyErrorText', 'الرجاء إدخال مفتاح الوصول');
         return;
       }
       
+      // تعيين حالة التحميل وإخفاء أي رسائل خطأ سابقة
       utils.setLoading(true);
-      utils.hideElement('errorMsg');
+      utils.hideElement('keyError');
+      
+      // حفظ المفتاح في الحالة
       appState.accessKey = key;
       
       try {
-        // Call Google Script function
+        // استدعاء وظيفة Google Script
         google.script.run
           .withSuccessHandler(function(response) {
-            // Process successful response
+            // معالجة الاستجابة الناجحة
+            console.log('استجابة التحقق من المفتاح:', response);
+            
             if (response.isValid) {
+              // حفظ معلومات المستخدم في الحالة
               appState.userRank = response.rank;
-              appState.isKeyUsed = response.used;
+              appState.rankLabel = response.rankLabel;
               appState.previousFiles = response.previousFiles || [];
               
-              // If the key has been used and there are previous files,
-              // go directly to result section with those files
+              // إذا تم استخدام المفتاح بالفعل وهناك ملفات سابقة،
+              // انتقل مباشرة إلى قسم النتيجة بتلك الملفات
               if (response.used && response.previousFiles && response.previousFiles.length > 0) {
-                // Find the most recent submission for this key
+                // ابحث عن أحدث إرسال لهذا المفتاح
                 const latestSubmission = response.previousFiles[0];
                 appState.results = {
                   pdf1: latestSubmission.pdf1,
@@ -775,46 +1476,54 @@
                 };
                 appState.fullName = latestSubmission.name;
                 
-                stopProgress();
-                showStep('result');
-                renderResultStep();
+                // إيقاف رسوم التحميل المتحركة
+                stopProgressAnimation();
                 
+                // عرض نتيجة الملف
+                showStep('result');
+                
+                // عرض إشعار نجاح
                 utils.showToast(
                   "تم التعرف عليك",
                   "تم استرجاع بياناتك السابقة بنجاح",
                   "success"
                 );
               } else {
-                // Proceed to form for new submission
-                stopProgress();
+                // الانتقال إلى نموذج الإرسال الجديد
+                stopProgressAnimation();
                 showStep('form');
-                renderFormStep();
               }
             } else {
-              stopProgress();
-              utils.showElement('errorMsg');
-              utils.setTextContent('errorMsg', 'المفتاح غير صحيح');
+              // إظهار رسالة خطأ المفتاح غير صالح
+              stopProgressAnimation();
+              utils.showElement('keyError');
+              utils.setTextContent('keyErrorText', 'المفتاح غير صحيح');
             }
+            
             utils.setLoading(false);
           })
           .withFailureHandler(function(error) {
-            // Handle error
-            stopProgress();
-            utils.showElement('errorMsg');
-            utils.setTextContent('errorMsg', error.message || 'حدث خطأ، الرجاء المحاولة لاحقًا');
+            // معالجة الخطأ
+            console.error('خطأ في التحقق من المفتاح:', error);
+            
+            stopProgressAnimation();
+            utils.showElement('keyError');
+            utils.setTextContent('keyErrorText', error.message || 'حدث خطأ، الرجاء المحاولة لاحقًا');
             utils.setLoading(false);
           })
-          .validateKey(key);
+          .validateKey(key, "UserIP"); // استخدام معرف مستخدم وهمي، يمكن استبداله بـ IP فعلي في بيئة الإنتاج
       } catch (err) {
-        stopProgress();
-        utils.showElement('errorMsg');
-        utils.setTextContent('errorMsg', err.message || 'حدث خطأ، الرجاء المحاولة لاحقًا');
+        console.error('خطأ في استدعاء validateKey:', err);
+        
+        stopProgressAnimation();
+        utils.showElement('keyError');
+        utils.setTextContent('keyErrorText', err.message || 'حدث خطأ، الرجاء المحاولة لاحقًا');
         utils.setLoading(false);
       }
     }
     
     async function submitForm() {
-      // Form validation based on user rank
+      // التحقق من صحة النموذج بناءً على رتبة المستخدم
       const fullNameInput = utils.getElement('fullName');
       const fullName = fullNameInput.value.trim();
       
@@ -825,7 +1534,7 @@
       
       appState.fullName = fullName;
       
-      // Get additional fields based on rank
+      // الحصول على الحقول الإضافية بناءً على الرتبة
       if ((appState.userRank === "كشاف" || appState.userRank === "قائد")) {
         const teamNumberInput = utils.getElement('teamNumber');
         const serialNumberInput = utils.getElement('serialNumber');
@@ -867,17 +1576,18 @@
         appState.gender = selectedGender;
       }
       
+      // تعيين حالة التحميل
       utils.setLoading(true);
       
       try {
-        // Prepare form data based on user rank
+        // إعداد بيانات النموذج بناءً على رتبة المستخدم
         const formData = {
           name: appState.fullName,
           key: appState.accessKey,
           rank: appState.userRank,
         };
         
-        // Add rank-specific fields
+        // إضافة الحقول الخاصة بالرتبة
         if (appState.userRank === "قائد" || appState.userRank === "كشاف") {
           formData.teamNumber = appState.teamNumber;
           formData.serialNumber = appState.serialNumber;
@@ -887,9 +1597,9 @@
           formData.gender = appState.gender;
         }
         
-        // Add photo if provided
+        // إضافة الصورة إذا تم توفيرها
         if (appState.photoFile) {
-          // Read file as Base64
+          // قراءة الملف كـ Base64
           const base64String = await new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -903,18 +1613,19 @@
           formData.mimeType = appState.photoFile.type;
         }
         
-        // Process form data with Google Script
+        // معالجة بيانات النموذج مع Google Script
         google.script.run
           .withSuccessHandler(function(response) {
-            // Process successful response
+            console.log('استجابة إرسال النموذج:', response);
+            
+            // معالجة الاستجابة الناجحة
             if (response) {
               appState.results = response;
-              stopProgress();
+              stopProgressAnimation();
               showStep('result');
-              renderResultStep();
               
               utils.showToast(
-                "نجاح",
+                "تمت العملية بنجاح",
                 "تم إنشاء الملفات بنجاح",
                 "success"
               );
@@ -922,8 +1633,10 @@
             utils.setLoading(false);
           })
           .withFailureHandler(function(error) {
-            // Handle error
-            stopProgress();
+            // معالجة الخطأ
+            console.error('خطأ في إرسال النموذج:', error);
+            
+            stopProgressAnimation();
             utils.showToast(
               "خطأ",
               error.message || "حدث خطأ أثناء معالجة الطلب",
@@ -933,7 +1646,9 @@
           })
           .processFormWithImage(formData);
       } catch (error) {
-        stopProgress();
+        console.error('خطأ في استدعاء processFormWithImage:', error);
+        
+        stopProgressAnimation();
         utils.showToast(
           "خطأ",
           error.message || "حدث خطأ أثناء معالجة الطلب",
@@ -943,19 +1658,25 @@
       }
     }
     
-    // Rendering Functions
+    // وظائف العرض
     function renderFormStep() {
+      // تعيين عنوان النموذج ووصفه
+      utils.setTextContent('rankLabel', 'استمارة التسجيل');
+      utils.setTextContent('rankDescription', appState.rankLabel || '');
+      
+      // تعيين قيمة الاسم
       const fullNameInput = utils.getElement('fullName');
       fullNameInput.value = appState.fullName;
       
+      // الحصول على حاوية الحقول الخاصة بالرتبة
       const rankSpecificFields = utils.getElement('rankSpecificFields');
       
-      // Clear existing fields
+      // مسح الحقول الحالية
       rankSpecificFields.innerHTML = '';
       
-      // Add rank-specific fields
+      // إضافة الحقول الخاصة بالرتبة
       if (appState.userRank === "كشاف" || appState.userRank === "قائد") {
-        // Add team number and serial number inputs
+        // إضافة حقول رقم الفرقة والرقم التسلسلي
         const fieldsHtml = `
           <div class="grid grid-cols-2 gap-4">
             <input
@@ -963,163 +1684,208 @@
               id="teamNumber"
               value="${appState.teamNumber}"
               placeholder="رقم الفرقة"
-              class="px-4 py-3 rounded-lg ${appState.isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-700 border-gray-200'} border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              class="input-custom"
             />
             <input
               type="text"
               id="serialNumber"
               value="${appState.serialNumber}"
               placeholder="الرقم التسلسلي"
-              class="px-4 py-3 rounded-lg ${appState.isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-700 border-gray-200'} border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              class="input-custom"
             />
           </div>
           
-          ${utils.createPhotoUploader(appState.photoPreview, appState.isDarkMode)}
+          ${utils.createImageUploader(appState.photoPreview, appState.isDarkMode)}
         `;
         
         rankSpecificFields.innerHTML += fieldsHtml;
         
-        // Add event listener to photo uploader
-        const photoUploader = utils.getElement('photoUploader');
-        const photoInput = utils.getElement('photoInput');
+        // إضافة مستمع الحدث لمحمل الصور
+        const imageUploader = rankSpecificFields.querySelector('.image-uploader');
+        const photoInput = document.createElement('input');
+        photoInput.type = 'file';
+        photoInput.accept = 'image/*';
+        photoInput.id = 'photoInput';
+        photoInput.className = 'hidden';
+        photoInput.addEventListener('change', handlePhotoChange);
         
-        photoUploader.addEventListener('click', () => {
+        imageUploader.appendChild(photoInput);
+        
+        imageUploader.addEventListener('click', () => {
           photoInput.click();
         });
-        
-        photoInput.addEventListener('change', handlePhotoChange);
       }
       
-      // Add gender selection for قائد rank
+      // إضافة اختيار الجنس لرتبة 'قائد' فقط
       if (appState.userRank === "قائد") {
         const genderHtml = `
-          <div class="flex gap-4">
-            <label class="flex-1 flex items-center justify-center gap-2 p-3 border rounded-lg cursor-pointer transition-all ${
-              appState.gender === "قائد" 
-                ? (appState.isDarkMode ? 'bg-indigo-700/60 border-indigo-500' : 'bg-indigo-100 border-indigo-400') 
-                : (appState.isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200')
-            }">
+          <div class="gender-selector">
+            <label class="gender-option ${appState.gender === 'قائد' ? 'active' : ''}">
               <input
                 type="radio"
                 name="gender"
                 value="قائد"
-                ${appState.gender === "قائد" ? 'checked' : ''}
+                ${appState.gender === 'قائد' ? 'checked' : ''}
                 class="hidden"
               />
-              <span class="${appState.gender === "قائد" ? (appState.isDarkMode ? 'text-indigo-200' : 'text-indigo-700') : (appState.isDarkMode ? 'text-gray-300' : '')}">قائد</span>
+              <span>قائد</span>
             </label>
             
-            <label class="flex-1 flex items-center justify-center gap-2 p-3 border rounded-lg cursor-pointer transition-all ${
-              appState.gender === "قائدة" 
-                ? (appState.isDarkMode ? 'bg-indigo-700/60 border-indigo-500' : 'bg-indigo-100 border-indigo-400') 
-                : (appState.isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200')
-            }">
+            <label class="gender-option ${appState.gender === 'قائدة' ? 'active' : ''}">
               <input
                 type="radio"
                 name="gender"
                 value="قائدة"
-                ${appState.gender === "قائدة" ? 'checked' : ''}
+                ${appState.gender === 'قائدة' ? 'checked' : ''}
                 class="hidden"
               />
-              <span class="${appState.gender === "قائدة" ? (appState.isDarkMode ? 'text-indigo-200' : 'text-indigo-700') : (appState.isDarkMode ? 'text-gray-300' : '')}">قائدة</span>
+              <span>قائدة</span>
             </label>
           </div>
         `;
         
         rankSpecificFields.innerHTML += genderHtml;
         
-        // Add event listeners to gender radios
-        const genderRadios = document.querySelectorAll('input[name="gender"]');
-        genderRadios.forEach(radio => {
-          radio.addEventListener('change', (e) => {
-            appState.gender = e.target.value;
-            renderFormStep(); // Re-render to update styles
+        // إضافة مستمعي الأحداث لخيارات الجنس
+        const genderOptions = rankSpecificFields.querySelectorAll('.gender-option');
+        genderOptions.forEach(option => {
+          const radioInput = option.querySelector('input[type="radio"]');
+          
+          option.addEventListener('click', () => {
+            // إزالة الفئة النشطة من جميع الخيارات
+            genderOptions.forEach(opt => opt.classList.remove('active'));
+            
+            // تحديد الخيار المحدد
+            radioInput.checked = true;
+            option.classList.add('active');
+            
+            // تحديث قيمة الجنس في الحالة
+            appState.gender = radioInput.value;
           });
         });
       }
       
-      // Show file history collapsible for قائد rank if there are previous files
+      // إظهار قسم سجل الملفات السابقة لرتبة 'قائد' إذا كانت هناك ملفات سابقة
       if (appState.userRank === "قائد" && appState.previousFiles.length > 0) {
-        utils.showElement('fileHistoryCollapsible');
-        renderPreviousFiles();
+        utils.showElement('fileHistorySection');
+        renderFileHistory();
       } else {
-        utils.hideElement('fileHistoryCollapsible');
+        utils.hideElement('fileHistorySection');
       }
     }
     
-    function renderPreviousFiles() {
-      const previousFilesContainer = utils.getElement('previousFilesContainer');
-      previousFilesContainer.innerHTML = '';
+    function renderFileHistory() {
+      const fileHistoryList = utils.getElement('fileHistoryList');
+      fileHistoryList.innerHTML = '';
       
-      appState.previousFiles.forEach((file, index) => {
-        const fileHtml = `
-          <div class="pt-4 first:pt-0">
-            <div class="flex justify-between items-center mb-2">
-              <span class="font-medium">${file.name}</span>
-              <span class="text-xs ${appState.isDarkMode ? 'text-gray-400' : 'text-gray-500'}">
-                ${file.date ? utils.formatDate(file.date) : ""}
-              </span>
-            </div>
-            <div class="grid grid-cols-1 gap-2">
-              ${file.pdf1 ? `
-                <a 
-                  href="${file.pdf1}" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  class="text-sm flex items-center p-2 rounded ${
-                    appState.isDarkMode ? 'bg-gray-700 text-blue-300 hover:bg-gray-600' : 'bg-gray-100 text-blue-600 hover:bg-gray-200'
-                  }"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                  الشهادة
-                </a>
-              ` : ''}
-              ${file.pdf2 ? `
-                <a 
-                  href="${file.pdf2}" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  class="text-sm flex items-center p-2 rounded ${
-                    appState.isDarkMode ? 'bg-gray-700 text-purple-300 hover:bg-gray-600' : 'bg-gray-100 text-purple-600 hover:bg-gray-200'
-                  }"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                  البطاقة
-                </a>
-              ` : ''}
-              ${file.pdf3 ? `
-                <a 
-                  href="${file.pdf3}" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  class="text-sm flex items-center p-2 rounded ${
-                    appState.isDarkMode ? 'bg-gray-700 text-green-300 hover:bg-gray-600' : 'bg-gray-100 text-green-600 hover:bg-gray-200'
-                  }"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                  شهادة اللجان
-                </a>
-              ` : ''}
-            </div>
-          </div>
-        `;
-        
-        previousFilesContainer.innerHTML += fileHtml;
+      // فرز الملفات السابقة حسب التاريخ (الأحدث أولاً)
+      const sortedFiles = [...appState.previousFiles].sort((a, b) => {
+        try {
+          const dateA = new Date(a.date.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+          const dateB = new Date(b.date.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+          return dateB - dateA;
+        } catch (err) {
+          return 0;
+        }
       });
       
-      // Set collapsible height based on open state
+      // إنشاء تجميع حسب التاريخ
+      const filesByDate = {};
+      sortedFiles.forEach(file => {
+        const dateKey = file.date ? file.date.split(' ')[0] : 'بدون تاريخ';
+        if (!filesByDate[dateKey]) {
+          filesByDate[dateKey] = [];
+        }
+        filesByDate[dateKey].push(file);
+      });
+      
+      // عرض الملفات مجمعة حسب التاريخ
+      Object.keys(filesByDate).forEach(dateKey => {
+        const dateFiles = filesByDate[dateKey];
+        
+        // إنشاء عنصر التاريخ
+        const dateElement = document.createElement('li');
+        dateElement.className = 'file-history-date';
+        dateElement.textContent = utils.formatDate(dateKey);
+        fileHistoryList.appendChild(dateElement);
+        
+        // إضافة الملفات لهذا التاريخ
+        dateFiles.forEach(file => {
+          // إضافة شهادة PDF1 إذا وجدت
+          if (file.pdf1) {
+            const pdf1Item = document.createElement('li');
+            pdf1Item.innerHTML = `
+              <a href="javascript:void(0)" class="pdf-button pdf-certificate" data-url="${file.pdf1}" data-filename="الشهادة_${file.name}.pdf">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                الشهادة
+              </a>
+            `;
+            fileHistoryList.appendChild(pdf1Item);
+            
+            // إضافة مستمع الحدث لزر التنزيل
+            const pdfButton = pdf1Item.querySelector('.pdf-button');
+            pdfButton.addEventListener('click', () => {
+              const url = pdfButton.getAttribute('data-url');
+              const filename = pdfButton.getAttribute('data-filename');
+              utils.downloadPDF(url, filename);
+            });
+          }
+          
+          // إضافة بطاقة PDF2 إذا وجدت
+          if (file.pdf2) {
+            const pdf2Item = document.createElement('li');
+            pdf2Item.innerHTML = `
+              <a href="javascript:void(0)" class="pdf-button pdf-idcard" data-url="${file.pdf2}" data-filename="البطاقة_${file.name}.pdf">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                البطاقة
+              </a>
+            `;
+            fileHistoryList.appendChild(pdf2Item);
+            
+            // إضافة مستمع الحدث لزر التنزيل
+            const pdfButton = pdf2Item.querySelector('.pdf-button');
+            pdfButton.addEventListener('click', () => {
+              const url = pdfButton.getAttribute('data-url');
+              const filename = pdfButton.getAttribute('data-filename');
+              utils.downloadPDF(url, filename);
+            });
+          }
+          
+          // إضافة شهادة اللجان PDF3 إذا وجدت
+          if (file.pdf3) {
+            const pdf3Item = document.createElement('li');
+            pdf3Item.innerHTML = `
+              <a href="javascript:void(0)" class="pdf-button pdf-committee" data-url="${file.pdf3}" data-filename="شهادة_اللجان_${file.name}.pdf">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                شهادة اللجان
+              </a>
+            `;
+            fileHistoryList.appendChild(pdf3Item);
+            
+            // إضافة مستمع الحدث لزر التنزيل
+            const pdfButton = pdf3Item.querySelector('.pdf-button');
+            pdfButton.addEventListener('click', () => {
+              const url = pdfButton.getAttribute('data-url');
+              const filename = pdfButton.getAttribute('data-filename');
+              utils.downloadPDF(url, filename);
+            });
+          }
+        });
+      });
+      
+      // تعيين ارتفاع المحتوى القابل للطي بناءً على حالة الفتح
       const collapsibleContent = document.querySelector('.collapsible-content');
       if (collapsibleContent) {
         if (appState.isCollapsibleOpen) {
@@ -1131,121 +1897,32 @@
     }
     
     function renderResultStep() {
-      // Update greeting with user name
-      utils.setTextContent('resultGreeting', `مرحباً بك ${appState.fullName}، تم إنشاء الملفات التالية`);
+      // تحديث الترحيب باسم المستخدم
+      utils.setTextContent('resultGreeting', `مرحباً بك ${appState.fullName}، تم إنشاء الملفات التالية:`);
       
-      // Get available tabs based on PDF results
-      const availableTabs = utils.getAvailableTabs(appState.results);
+      // الحصول على التبويبات المتاحة بناءً على نتائج PDF
+      const availableTabs = utils.getAvailablePdfTabs(appState.results);
       
       if (availableTabs.length > 0) {
-        // If active tab is not in available tabs, set to first available
-        if (!availableTabs.includes(appState.activeTab)) {
-          appState.activeTab = availableTabs[0];
+        // إذا كان التبويب النشط غير موجود في التبويبات المتاحة، تعيين إلى أول تبويب متاح
+        if (!availableTabs.includes(appState.activePdfTab)) {
+          appState.activePdfTab = availableTabs[0];
         }
         
-        // Render tabs
-        const tabsList = utils.getElement('tabsList');
-        tabsList.innerHTML = '';
+        // عرض تبويبات PDF
+        renderPdfTabs(availableTabs);
         
-        availableTabs.forEach(tab => {
-          const tabButton = document.createElement('div');
-          tabButton.className = `tab ${tab === appState.activeTab ? 'active' : ''}`;
-          tabButton.textContent = utils.getTabName(tab);
-          tabButton.dataset.tab = tab;
-          
-          tabButton.addEventListener('click', () => {
-            appState.activeTab = tab;
-            renderResultTabs();
-          });
-          
-          tabsList.appendChild(tabButton);
-        });
-        
-        // Render tab panels
-        const tabPanels = utils.getElement('tabPanels');
-        tabPanels.innerHTML = '';
-        
-        availableTabs.forEach(tab => {
-          const pdfUrl = appState.results[tab];
-          if (!pdfUrl) return;
-          
-          const pdfFilename = `${utils.getTabName(tab)}_${appState.fullName}.pdf`;
-          
-          const panel = document.createElement('div');
-          panel.className = `tab-panel ${tab === appState.activeTab ? 'active' : ''}`;
-          panel.dataset.panel = tab;
-          
-          panel.innerHTML = `
-            <div class="bg-gray-800 rounded-lg overflow-hidden">
-              <iframe 
-                src="${pdfUrl}" 
-                class="w-full h-96" 
-                title="${utils.getTabName(tab)}" 
-              />
-            </div>
-            
-            <div class="flex justify-between mt-4">
-              <button
-                class="download-pdf-btn px-4 py-2 rounded-lg flex items-center gap-2 ${
-                  appState.isDarkMode 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                    : 'bg-blue-500 hover:bg-blue-600 text-white'
-                }"
-                data-url="${pdfUrl}"
-                data-filename="${pdfFilename}"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                تنزيل الملف
-              </button>
-              
-              <a 
-                href="${pdfUrl}" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                class="px-4 py-2 rounded-lg flex items-center gap-2 ${
-                  appState.isDarkMode 
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                }"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <line x1="10" y1="14" x2="21" y2="3"></line>
-                </svg>
-                فتح في نافذة جديدة
-              </a>
-            </div>
-          `;
-          
-          tabPanels.appendChild(panel);
-        });
-        
-        // Add event listeners to download buttons
-        const downloadButtons = document.querySelectorAll('.download-pdf-btn');
-        downloadButtons.forEach(button => {
-          button.addEventListener('click', () => {
-            const url = button.dataset.url;
-            const filename = button.dataset.filename;
-            if (url && filename) {
-              utils.downloadPDF(url, filename);
-            }
-          });
-        });
-        
+        // عرض محتوى التبويب النشط
+        renderPdfTabContent(availableTabs);
       } else {
-        // No PDFs available
-        const tabsList = utils.getElement('tabsList');
-        tabsList.innerHTML = '';
+        // لا توجد ملفات PDF متاحة
+        const pdfTabs = utils.getElement('pdfTabs');
+        pdfTabs.innerHTML = '';
         
-        const tabPanels = utils.getElement('tabPanels');
-        tabPanels.innerHTML = `
-          <div class="text-center p-8 border rounded-lg ${appState.isDarkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'}">
-            <p class="${appState.isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+        const pdfTabPanels = utils.getElement('pdfTabPanels');
+        pdfTabPanels.innerHTML = `
+          <div class="text-center p-8 border rounded-lg">
+            <p class="opacity-80">
               لم يتم إنشاء أي ملفات
             </p>
           </div>
@@ -1253,34 +1930,166 @@
       }
     }
     
-    function renderResultTabs() {
-      // Update active tab indicator
-      const tabs = document.querySelectorAll('.tab');
-      tabs.forEach(tab => {
-        if (tab.dataset.tab === appState.activeTab) {
-          tab.classList.add('active');
-        } else {
-          tab.classList.remove('active');
-        }
+    function renderPdfTabs(availableTabs) {
+      const pdfTabs = utils.getElement('pdfTabs');
+      pdfTabs.innerHTML = '';
+      
+      // إضافة شريحة متحركة للتبويبات
+      const tabSlider = document.createElement('div');
+      tabSlider.className = 'tab-slider';
+      pdfTabs.appendChild(tabSlider);
+      
+      // إنشاء تبويبات PDF
+      availableTabs.forEach((tabKey, index) => {
+        const tabButton = document.createElement('div');
+        tabButton.className = `tab ${tabKey === appState.activePdfTab ? 'active' : ''}`;
+        tabButton.textContent = utils.getPdfTabName(tabKey);
+        tabButton.dataset.tab = tabKey;
+        
+        tabButton.addEventListener('click', () => {
+          // تحديث التبويب النشط
+          appState.activePdfTab = tabKey;
+          
+          // تحديث شريحة التبويب
+          const tabWidth = 100 / availableTabs.length;
+          tabSlider.style.width = `${tabWidth}%`;
+          tabSlider.style.left = `${index * tabWidth}%`;
+          
+          // تحديث حالة التبويبات
+          const tabs = pdfTabs.querySelectorAll('.tab');
+          tabs.forEach(tab => {
+            if (tab.dataset.tab === tabKey) {
+              tab.classList.add('active');
+            } else {
+              tab.classList.remove('active');
+            }
+          });
+          
+          // تحديث محتوى التبويب
+          renderPdfTabContent(availableTabs);
+        });
+        
+        pdfTabs.appendChild(tabButton);
       });
       
-      // Show active panel, hide others
-      const panels = document.querySelectorAll('.tab-panel');
-      panels.forEach(panel => {
-        if (panel.dataset.panel === appState.activeTab) {
-          panel.classList.add('active');
-        } else {
-          panel.classList.remove('active');
-        }
-      });
+      // تعيين موضع الشريحة المتحركة الأولي
+      if (availableTabs.length > 0) {
+        const activeIndex = availableTabs.indexOf(appState.activePdfTab);
+        const tabWidth = 100 / availableTabs.length;
+        tabSlider.style.width = `${tabWidth}%`;
+        tabSlider.style.left = `${activeIndex * tabWidth}%`;
+      }
     }
     
-    // Handler Functions
+    function renderPdfTabContent(availableTabs) {
+      const pdfTabPanels = utils.getElement('pdfTabPanels');
+      pdfTabPanels.innerHTML = '';
+      
+      // عرض محتوى التبويب النشط فقط
+      const activeTab = appState.activePdfTab;
+      if (activeTab && appState.results && appState.results[activeTab]) {
+        const pdfUrl = appState.results[activeTab];
+        const pdfFilename = `${utils.getPdfTabName(activeTab)}_${appState.fullName}.pdf`;
+        
+        const panel = document.createElement('div');
+        panel.className = 'tab-panel active';
+        panel.dataset.panel = activeTab;
+        
+        panel.innerHTML = `
+          <div class="pdf-viewer">
+            <iframe
+              src="${pdfUrl}"
+              class="pdf-iframe"
+              title="${utils.getPdfTabName(activeTab)}"
+            ></iframe>
+          </div>
+          
+          <div class="flex justify-between">
+            <button
+              class="px-4 py-2 rounded-lg bg-primary text-white flex items-center space-x-2 hover-lift btn-download"
+              data-url="${pdfUrl}"
+              data-filename="${pdfFilename}"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>تنزيل الملف</span>
+            </button>
+            
+            <button
+              class="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 flex items-center space-x-2 hover-lift btn-preview"
+              data-url="${pdfUrl}"
+              data-filename="${pdfFilename}"
+              data-title="${utils.getPdfTabName(activeTab)}"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <span>معاينة بالحجم الكامل</span>
+            </button>
+          </div>
+        `;
+        
+        pdfTabPanels.appendChild(panel);
+        
+        // إضافة مستمعات الأحداث
+        const downloadButton = panel.querySelector('.btn-download');
+        downloadButton.addEventListener('click', () => {
+          const url = downloadButton.getAttribute('data-url');
+          const filename = downloadButton.getAttribute('data-filename');
+          utils.downloadPDF(url, filename);
+        });
+        
+        const previewButton = panel.querySelector('.btn-preview');
+        previewButton.addEventListener('click', () => {
+          openPdfModal(
+            previewButton.getAttribute('data-url'),
+            previewButton.getAttribute('data-filename'),
+            previewButton.getAttribute('data-title')
+          );
+        });
+      }
+    }
+    
+    function openPdfModal(pdfUrl, filename, title) {
+      const modal = utils.getElement('pdfViewerModal');
+      const iframe = utils.getElement('pdfModalIframe');
+      const modalTitle = utils.getElement('pdfModalTitle');
+      const downloadBtn = utils.getElement('pdfModalDownload');
+      const openNewBtn = utils.getElement('pdfModalOpenNew');
+      
+      // تعيين المحتوى
+      modalTitle.textContent = title || 'معاينة PDF';
+      iframe.src = pdfUrl;
+      
+      // تعيين روابط التنزيل والفتح في نافذة جديدة
+      downloadBtn.onclick = () => utils.downloadPDF(pdfUrl, filename);
+      openNewBtn.onclick = () => window.open(pdfUrl, '_blank');
+      
+      // فتح المودال
+      modal.classList.add('open');
+    }
+    
+    function closePdfModal() {
+      const modal = utils.getElement('pdfViewerModal');
+      const iframe = utils.getElement('pdfModalIframe');
+      
+      // إفراغ المحتوى
+      iframe.src = 'about:blank';
+      
+      // إغلاق المودال
+      modal.classList.remove('open');
+    }
+    
+    // وظائف معالجة الأحداث
     function handlePhotoChange(e) {
       const file = e.target.files?.[0];
       if (!file) return;
       
-      // Validate file type
+      // التحقق من نوع الملف
       const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
       if (!allowedTypes.includes(file.type)) {
         utils.showToast(
@@ -1291,7 +2100,7 @@
         return;
       }
       
-      // Validate file size (max 20MB)
+      // التحقق من حجم الملف (الحد الأقصى 20 ميجابايت)
       if (file.size > 20 * 1024 * 1024) {
         utils.showToast(
           "حجم الصورة كبير جداً",
@@ -1301,23 +2110,27 @@
         return;
       }
       
+      // تحديث ملف الصورة في الحالة
       appState.photoFile = file;
       
-      // Create preview
+      // إنشاء معاينة
       const reader = new FileReader();
       reader.onload = (e) => {
         appState.photoPreview = e.target?.result;
-        renderFormStep(); // Re-render to show preview
+        renderFormStep(); // إعادة عرض النموذج لإظهار المعاينة
       };
       reader.readAsDataURL(file);
     }
     
     function toggleCollapsible() {
+      // تبديل حالة القابل للطي
       appState.isCollapsibleOpen = !appState.isCollapsibleOpen;
       
+      // الحصول على العناصر ذات الصلة
       const collapsibleContent = document.querySelector('.collapsible-content');
       const chevron = document.querySelector('.chevron');
       
+      // تحديث العناصر وفقًا للحالة
       if (collapsibleContent) {
         if (appState.isCollapsibleOpen) {
           collapsibleContent.classList.add('open');
@@ -1330,7 +2143,11 @@
     }
     
     function restartProcess() {
-      // Reset all state
+      // إعادة تعيين حالة التطبيق مع الحفاظ على المفتاح
+      const savedKey = appState.accessKey;
+      const savedIsDarkMode = appState.isDarkMode;
+      
+      // إعادة تعيين الحالة
       appState.currentStep = 'key';
       appState.fullName = '';
       appState.teamNumber = '';
@@ -1340,33 +2157,42 @@
       appState.photoPreview = '';
       appState.results = null;
       appState.isCollapsibleOpen = false;
-      appState.activeTab = 'pdf1';
+      appState.activePdfTab = 'pdf1';
       
-      // Reset form inputs
+      // استعادة المفتاح وحالة السمة
+      appState.accessKey = savedKey;
+      appState.isDarkMode = savedIsDarkMode;
+      
+      // إعادة تعيين حقول النموذج
       const accessKeyInput = utils.getElement('accessKey');
-      accessKeyInput.value = appState.accessKey; // Keep the access key
+      accessKeyInput.value = appState.accessKey; // الاحتفاظ بالمفتاح
       
-      // Show key step
+      // عرض خطوة المفتاح
       showStep('key');
     }
     
-    // Initialize the application
+    // تهيئة التطبيق
     function initializeApp() {
-      // Setup particles background
+      // إعداد جزيئات الخلفية
       utils.setupParticles();
       
-      // Apply dark mode based on system preference
-      utils.applyDarkMode(appState.isDarkMode);
+      // تطبيق السمة المناسبة
+      utils.applyTheme(appState.isDarkMode);
       
-      // Add event listeners
+      // إعداد رسوم لوتي المتحركة
+      if (window.lottie) {
+        utils.setupLottieAnimations();
+      }
       
-      // Dark mode toggle
-      const darkModeToggle = utils.getElement('darkModeToggle');
-      darkModeToggle.addEventListener('click', () => {
+      // إضافة مستمعات الأحداث
+      
+      // زر تبديل السمة
+      const themeToggle = utils.getElement('themeToggle');
+      themeToggle.addEventListener('click', () => {
         appState.isDarkMode = !appState.isDarkMode;
-        utils.applyDarkMode(appState.isDarkMode);
+        utils.applyTheme(appState.isDarkMode);
         
-        // Re-render current step with new theme
+        // إعادة عرض الخطوة الحالية مع السمة الجديدة
         if (appState.currentStep === 'form') {
           renderFormStep();
         } else if (appState.currentStep === 'result') {
@@ -1374,11 +2200,11 @@
         }
       });
       
-      // Key validation
+      // التحقق من المفتاح
       const validateKeyButton = utils.getElement('validateKeyButton');
       validateKeyButton.addEventListener('click', validateKey);
       
-      // Key input enter press
+      // إدخال المفتاح عند الضغط على Enter
       const accessKeyInput = utils.getElement('accessKey');
       accessKeyInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -1386,21 +2212,38 @@
         }
       });
       
-      // Form submission
+      // إرسال النموذج
       const submitFormButton = utils.getElement('submitFormButton');
       submitFormButton.addEventListener('click', submitForm);
       
-      // Collapsible toggle
+      // تبديل القابل للطي
       const collapsibleHeader = document.querySelector('.collapsible-header');
-      collapsibleHeader?.addEventListener('click', toggleCollapsible);
+      if (collapsibleHeader) {
+        collapsibleHeader.addEventListener('click', toggleCollapsible);
+      }
       
-      // Restart process
+      // إعادة تشغيل العملية
       const restartButton = utils.getElement('restartButton');
       restartButton.addEventListener('click', restartProcess);
+      
+      // إغلاق المودال
+      const pdfModalClose = utils.getElement('pdfModalClose');
+      pdfModalClose.addEventListener('click', closePdfModal);
+      
+      // إغلاق الإشعار
+      const toastCloseBtn = utils.getElement('toastClose');
+      toastCloseBtn.addEventListener('click', () => {
+        const toast = utils.getElement('toast');
+        toast.classList.remove('show');
+        if (appState.toastTimeout) {
+          clearTimeout(appState.toastTimeout);
+        }
+      });
     }
     
-    // Start the application when DOM is loaded
+    // بدء التطبيق عند تحميل DOM
     document.addEventListener('DOMContentLoaded', initializeApp);
   </script>
 </body>
 </html>
+
