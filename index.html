@@ -331,10 +331,11 @@
 
     .error-message {
       color: var(--error);
-      font-size: 0.9rem;
+      font-size: 1.2rem;
       margin-top: 0.5rem;
       display: none;
       animation: fadeIn 0.3s ease;
+      text-align: center;
     }
 
     @keyframes fadeIn {
@@ -392,12 +393,15 @@
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       animation: slideUp 0.3s ease forwards;
       z-index: 999;
-      display: flex;
+      display: flex !important;
       align-items: center;
       justify-content: center;
       min-width: 250px;
       text-align: center;
       display: none;
+      align-content: center;
+      flex-wrap: nowrap;
+      height: 70px;
     }
 
     .toast.success {
@@ -411,8 +415,23 @@
     .toast-icon {
       margin-left: 0.5rem;
       font-size: 1.1rem;
+      height: 25px;
+      width: 25px;
     }
-
+    .toast.success .toast-icon {
+    color: #ffffff;
+    }
+  
+    .toast.error .toast-icon {
+      color: #ffffff;
+    }
+    .toast-icon {
+        fill: none;
+        stroke: currentcolor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
     @keyframes slideUp {
       from { 
         opacity: 0;
@@ -584,7 +603,7 @@
             <polyline points="21 15 16 10 5 21"></polyline>
           </svg>
         </label>
-        <input type="file" accept="image/*" id="photoUpload" class="form-input" aria-label="حمل صورة شخصية">
+        <input type="file" accept=".jpg, .jpeg, .png" id="photoUpload" class="form-input" aria-label="حمل صورة شخصية">
       </div>
       
       <div id="imagePreview" class="image-preview-wrapper">
@@ -809,7 +828,7 @@
       // ربط الأزرار
       document.getElementById('validateKeyBtn').addEventListener('click', validateKey);
       document.getElementById('submitFormBtn').addEventListener('click', submitForm);
-      document.getElementById('newRegistrationBtn').addEventListener('click', () => showSection('key'));
+      document.getElementById('newRegistrationBtn').addEventListener('click', () => {location.reload();});
       
       // ========== دوال التحقق والإرسال ==========
       
@@ -1001,20 +1020,21 @@
         const toastIcon = document.querySelector('.toast-icon');
         
         // تعيين النوع والرسالة
+        toast.style.cssText = '';
         toast.className = `toast ${type}`;
         toastMessage.textContent = message;
         
         // تعيين الأيقونة حسب النوع
         if (type === 'success') {
           toastIcon.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" style="width: 25px;height: 20px;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
               <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
           `;
         } else {
           toastIcon.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" style="width: 25px;height: 20px;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="8" x2="12" y2="12"></line>
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -1025,15 +1045,16 @@
         // عرض التوست
         toast.style.display = 'flex';
         
-        // إخفاء التوست بعد 3 ثواني
+        // إخفاء التوست بعد 10 ثواني
         setTimeout(() => {
           toast.style.opacity = '0';
           toast.style.transition = 'opacity 0.5s';
           setTimeout(() => {
             toast.style.display = 'none';
             toast.style.opacity = '1';
+            toast.style.transition = '';
           }, 500);
-        }, 3000);
+        }, 5000);
       }
     });
   </script>
