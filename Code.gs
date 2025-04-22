@@ -82,11 +82,11 @@ function validateKey(key) {
       throw('تم تجاوز عدد المحاولات، الرجاء الانتظار 5 دقائق');
     }
 
-    // تنسيق المفتاح
-    key = (key || '').toString().trim();
+    // تنسيق المفتاح وتحويله لسلسلة نصية وإزالة المسافات
+    key = String(key || '').trim();
     
     // تسجيل بيانات التنفيذ للتصحيح
-    Logger.log('Validating key: ' + key);
+    Logger.log('Validating key: "' + key + '"');
     
     // الوصول إلى صفحة المفاتيح
     const sheet = getSpreadsheet().getSheetByName('المفاتيح');
@@ -104,46 +104,57 @@ function validateKey(key) {
     }
 
     // الحصول على كافة البيانات المطلوبة
-    const keyRange = sheet.getRange(1, 1, lastRow, 1);
-    const rankRange = sheet.getRange(1, 2, lastRow, 1);
-    const usedRange = sheet.getRange(1, 3, lastRow, 1);
+    const data = sheet.getRange(1, 1, lastRow, 3).getValues();
     
-    const keys = keyRange.getValues().flat().map(k => k.toString().trim());
-    const ranks = rankRange.getValues().flat().map(r => r.toString().trim());
-    const used = usedRange.getValues().flat().map(u => u.toString().trim());
-    
-    Logger.log('Available keys: ' + JSON.stringify(keys));
+    // تسجيل البيانات للتصحيح
+    Logger.log('Sheet data: ' + JSON.stringify(data));
     
     // البحث عن المفتاح
-    const index = keys.indexOf(key);
-    Logger.log('Key index: ' + index);
+    let foundIndex = -1;
+    let foundRank = '';
+    let isUsed = false;
     
-    if (index === -1) {
+    for (let i = 0; i < data.length; i++) {
+      const rowKey = String(data[i][0]).trim();
+      Logger.log(`Comparing "${rowKey}" with "${key}"`);
+      
+      if (rowKey === key) {
+        foundIndex = i;
+        foundRank = String(data[i][1]).trim();
+        isUsed = String(data[i][2]).trim() === '1';
+        break;
+      }
+    }
+    
+    Logger.log('Found index: ' + foundIndex + ', Rank: ' + foundRank + ', Used: ' + isUsed);
+    
+    if (foundIndex === -1) {
       // إذا لم يتم العثور على المفتاح، زيادة عداد المحاولات الخاطئة
       const attempts = parseInt(cache.get(ip) || '0') + 1;
       cache.put(ip, attempts.toString(), 5 * 60); // تخزين لمدة 5 دقائق
       throw('المفتاح غير صحيح');
     }
 
-    // تحقق مما إذا كان المفتاح قد تم استخدامه
-    const isUsed = used[index] === '1';
-    
-    // الحصول على الرتبة
-    const rank = ranks[index];
-
-    // البحث عن السجلات السابقة للمستخدم (فقط إذا كان قائد)
+    // الحصول على السجلات السابقة للمستخدم (للكشاف المسجل مسبقا أو قائد)
     let previousFiles = [];
-    if (isUsed || rank === 'قائد') {
+    
+    if (isUsed || foundRank === 'قائد') {
       previousFiles = getPreviousFiles(key);
     }
-
+    
+    // إذا كان المفتاح مستخدم ويوجد سجلات سابقة ولكن ليس بدرجة قائد
+    // نسمح للمستخدم بمشاهدة السجلات السابقة فقط وليس إضافة سجلات جديدة
+    const canAddNewRecord = foundRank === 'قائد' || !isUsed;
+    
+    // إعادة النتائج
     return {
       isValid: true,
       key: key,
-      rank: rank,
+      rank: foundRank,
       used: isUsed,
-      index: index + 1,  // +1 لأن الصفوف في Sheets تبدأ من 1
-      previousFiles: previousFiles
+      index: foundIndex + 1,  // +1 لأن الصفوف في Sheets تبدأ من 1
+      previousFiles: previousFiles,
+      canAddNewRecord: canAddNewRecord
     };
 
   } catch (error) {
@@ -164,8 +175,11 @@ function getPreviousFiles(key) {
     // البحث عن جميع السجلات التي تحتوي على المفتاح المحدد
     const records = logSheet.getDataRange().getValues();
     
+    // تنسيق المفتاح
+    const normalizedKey = String(key).trim();
+    
     // تصفية السجلات حسب المفتاح
-    const results = records.filter(row => row[1] === key)
+    const results = records.filter(row => String(row[1]).trim() === normalizedKey)
       .map(row => {
         // التحقق من وجود الروابط
         const pdf1Url = row[2] || null;
@@ -174,8 +188,8 @@ function getPreviousFiles(key) {
         const date = row[8] instanceof Date ? row[8] : new Date();
         
         return {
-          name: row[0],
-          key: row[1],
+          name: row[0] || "",
+          key: row[1] || "",
           pdf1: pdf1Url,
           pdf2: pdf2Url,
           pdf3: pdf3Url,
@@ -246,24 +260,37 @@ function processFormWithImage(data) {
     let pdf2Url = null;
     let pdf3Url = null;
     
-    // إنشاء ملفات PDF حسب الرتبة
-    if (rank === 'كشاف' || rank === 'قائد') {
-      const pdf1Result = createPdfFromTemplate(PDF_TEMPLATE_ID_1, name, gender);
-      pdf1Url = pdf1Result.pdf.getUrl();
-      tempDocIds = [...tempDocIds, ...pdf1Result.tempIds];
-      
-      // لإنشاء PDF الثاني، نحتاج إلى صورة
-      if (imageId) {
-        const pdf2Result = createPdfWithImageFromTemplate(PDF_TEMPLATE_ID_2, name, imageId, gender);
-        pdf2Url = pdf2Result.pdf.getUrl();
-        tempDocIds = [...tempDocIds, ...pdf2Result.tempIds];
+    // إنشاء ملفات PDF حسب الرتبة وتوفر القوالب
+    if ((rank === 'كشاف' || rank === 'قائد') && PDF_TEMPLATE_ID_1) {
+      try {
+        const pdf1Result = createPdfFromTemplate(PDF_TEMPLATE_ID_1, name, gender);
+        pdf1Url = pdf1Result.pdf.getUrl();
+        tempDocIds = [...tempDocIds, ...pdf1Result.tempIds];
+      } catch (e) {
+        Logger.log('تعذر إنشاء الشهادة PDF1: ' + e.message);
+        // لا نرمي خطأ هنا حتى لا نتوقف عن إنشاء باقي الملفات
       }
     }
     
-    if (rank === 'لجان' || rank === 'قائد') {
-      const pdf3Result = createPdfFromTemplate(PDF_TEMPLATE_ID_3, name, gender);
-      pdf3Url = pdf3Result.pdf.getUrl();
-      tempDocIds = [...tempDocIds, ...pdf3Result.tempIds];
+    // لإنشاء PDF الثاني، نحتاج إلى صورة
+    if ((rank === 'كشاف' || rank === 'قائد') && imageId && PDF_TEMPLATE_ID_2) {
+      try {
+        const pdf2Result = createPdfWithImageFromTemplate(PDF_TEMPLATE_ID_2, name, imageId, gender);
+        pdf2Url = pdf2Result.pdf.getUrl();
+        tempDocIds = [...tempDocIds, ...pdf2Result.tempIds];
+      } catch (e) {
+        Logger.log('تعذر إنشاء البطاقة PDF2: ' + e.message);
+      }
+    }
+    
+    if ((rank === 'لجان' || rank === 'قائد') && PDF_TEMPLATE_ID_3) {
+      try {
+        const pdf3Result = createPdfFromTemplate(PDF_TEMPLATE_ID_3, name, gender);
+        pdf3Url = pdf3Result.pdf.getUrl();
+        tempDocIds = [...tempDocIds, ...pdf3Result.tempIds];
+      } catch (e) {
+        Logger.log('تعذر إنشاء شهادة اللجان PDF3: ' + e.message);
+      }
     }
     
     // تحديد الملفات بسماح المشاركة للجميع
@@ -283,7 +310,6 @@ function processFormWithImage(data) {
       new Date(),     // التاريخ
       '',             // حقل احتياطي
       ''              // حقل احتياطي
-
     ]);
     
     // تحديث حالة الاستخدام للمفتاح (إذا لم يكن قائد)
@@ -291,6 +317,11 @@ function processFormWithImage(data) {
       const keySheet = getSpreadsheet().getSheetByName('المفاتيح');
       const keyData = validateKey(key);
       keySheet.getRange(keyData.index, 3).setValue('1'); // تحديث حالة الاستخدام
+    }
+    
+    // في حالة عدم إنشاء أي ملف PDF، نعرض رسالة خطأ
+    if (!pdf1Url && !pdf2Url && !pdf3Url) {
+      throw('لم يتم إنشاء أي ملفات، تأكد من توفر قوالب PDF');
     }
     
     return { 
@@ -367,10 +398,13 @@ function getPreviousResults(key) {
       return null;
     }
 
+    // تنسيق المفتاح
+    const normalizedKey = String(key).trim();
+
     // البحث عن السجل بالمفتاح
     const records = logSheet.getDataRange().getValues();
     for (let i = 0; i < records.length; i++) {
-      if (records[i][1].toString().trim() === key.toString().trim()) {
+      if (String(records[i][1]).trim() === normalizedKey) {
         // إرجاع روابط PDF
         return {
           pdf1: records[i][2] || null,
@@ -403,15 +437,19 @@ function saveImage(base64Image, mimeType) {
 
   } catch (e) {
     Logger.log('خطأ في حفظ الصورة: ' + e.message);
-    throw new Error('Could not decode string.');
+    throw('فشل حفظ الصورة');
   }
 }
-
 
 // ========== دوال إنشاء PDF ==========
 function createPdfFromTemplate(templateId, name, gender) {
   const tempIds = [];
   try {
+    // التحقق من وجود قالب
+    if (!templateId) {
+      throw('قالب PDF غير متوفر');
+    }
+    
     // إنشاء نسخة مؤقتة من النموذج
     const templateFile = DriveApp.getFileById(templateId);
     const tempFolder = getTempFolder();
@@ -437,13 +475,18 @@ function createPdfFromTemplate(templateId, name, gender) {
     return { pdf: pdfFile, tempIds: tempIds };
   } catch (e) {
     Logger.log('خطأ في إنشاء PDF: ' + e.message);
-    throw('فشل إنشاء المستند ');
+    throw('فشل إنشاء المستند: ' + e.message);
   }
 }
 
 function createPdfWithImageFromTemplate(templateId, name, imageUrl, gender) {
   const tempIds = [];
   try {
+    // التحقق من وجود قالب
+    if (!templateId) {
+      throw('قالب PDF غير متوفر');
+    }
+    
     // إنشاء نسخة مؤقتة من النموذج
     const templateFile = DriveApp.getFileById(templateId);
     const tempFolder = getTempFolder();
@@ -512,7 +555,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl, gender) {
     return { pdf: pdfFile, tempIds: tempIds };
   } catch (e) {
     Logger.log('خطأ في إنشاء PDF مع صورة: ' + e.message);
-    throw('فشل إنشاء البطاقة ');
+    throw('فشل إنشاء البطاقة: ' + e.message);
   }
 }
 
