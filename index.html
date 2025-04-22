@@ -6,7 +6,36 @@
     <link rel="icon" type="image/ico" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>نظام التسجيل</title>
+    <!-- Add particles.js script -->
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <!-- Add custom scrollbar styles -->
+    <style>
+      /* Modern scrollbar styles */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: rgba(156, 163, 175, 0.5);
+        border-radius: 4px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(156, 163, 175, 0.7);
+      }
+
+      /* For Firefox */
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(156, 163, 175, 0.5) rgba(0, 0, 0, 0.1);
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
@@ -14,3 +43,4 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
