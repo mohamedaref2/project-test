@@ -183,11 +183,6 @@ const Index = () => {
     };
   }, [isLoading]);
 
-  // Toggle dark/light mode
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
-
   // Simulate progress during loading operations
   useEffect(() => {
     let progressInterval: NodeJS.Timeout;
@@ -756,240 +751,4 @@ const Index = () => {
                                 }`}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                  <polyline points="7 10 12 15 17 10"></polyline>
-                                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                البطاقة
-                              </a>
-                            )}
-                            {file.pdf3 && (
-                              <a 
-                                href={file.pdf3} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className={`text-sm flex items-center p-2 rounded ${
-                                  isDarkMode ? 'bg-gray-700 text-green-300 hover:bg-gray-600' : 'bg-gray-100 text-green-600 hover:bg-gray-200'
-                                }`}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                  <polyline points="7 10 12 15 17 10"></polyline>
-                                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                شهادة اللجان
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
-            </div>
-          </div>
-        )}
-
-        {currentStep === "result" && results && (
-          <div className="space-y-8 animate-fade-in" data-section="result" data-allowed="true">
-            <div className="space-y-2 text-center">
-              <div className="inline-flex items-center justify-center p-2 bg-green-100 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-green-500">تمت العملية بنجاح! 🎉</h2>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
-                تم إنشاء الملفات بنجاح، يمكنك تحميلها من الأسفل
-              </p>
-            </div>
-            
-            {/* Tabs for PDF files */}
-            <div className="space-y-4">
-              {getAvailableTabs(results).length > 0 ? (
-                <Tabs 
-                  defaultValue={getAvailableTabs(results)[0]} 
-                  value={activeTab} 
-                  onValueChange={setActiveTab}
-                  className="w-full"
-                >
-                  <TabsList className="w-full mb-4">
-                    {getAvailableTabs(results).map((tab) => (
-                      <TabsTrigger 
-                        key={tab} 
-                        value={tab}
-                        className={`flex-1 ${activeTab === tab ? 'font-bold' : ''}`}
-                      >
-                        {getTabName(tab)}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                  
-                  {/* PDF Content */}
-                  {results.pdf1 && (
-                    <TabsContent value="pdf1" className="focus:outline-none">
-                      <div className={`rounded-lg overflow-hidden border ${
-                        isDarkMode ? 'border-gray-700' : 'border-gray-300'
-                      } mb-4`}>
-                        <div className="aspect-[3/4] w-full bg-gray-100 flex items-center justify-center">
-                          <iframe 
-                            src={`${results.pdf1.replace('view', 'preview')}`}
-                            className="w-full h-full"
-                            title="معاينة الشهادة"
-                          ></iframe>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => downloadPDF(results.pdf1!, 'الشهادة.pdf')}
-                        className={`w-full py-3 rounded-lg font-bold transition-all flex items-center justify-center ${
-                          isDarkMode 
-                            ? 'bg-indigo-700 hover:bg-indigo-800 text-white' 
-                            : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                        }`}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                          <polyline points="7 10 12 15 17 10"></polyline>
-                          <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        تحميل الشهادة
-                      </button>
-                    </TabsContent>
-                  )}
-                  
-                  {results.pdf2 && (
-                    <TabsContent value="pdf2" className="focus:outline-none">
-                      <div className={`rounded-lg overflow-hidden border ${
-                        isDarkMode ? 'border-gray-700' : 'border-gray-300'
-                      } mb-4`}>
-                        <div className="aspect-[3/4] w-full bg-gray-100 flex items-center justify-center">
-                          <iframe 
-                            src={`${results.pdf2.replace('view', 'preview')}`}
-                            className="w-full h-full"
-                            title="معاينة البطاقة"
-                          ></iframe>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => downloadPDF(results.pdf2!, 'البطاقة.pdf')}
-                        className={`w-full py-3 rounded-lg font-bold transition-all flex items-center justify-center ${
-                          isDarkMode 
-                            ? 'bg-purple-700 hover:bg-purple-800 text-white' 
-                            : 'bg-purple-600 hover:bg-purple-700 text-white'
-                        }`}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                          <polyline points="7 10 12 15 17 10"></polyline>
-                          <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        تحميل البطاقة
-                      </button>
-                    </TabsContent>
-                  )}
-                  
-                  {results.pdf3 && (
-                    <TabsContent value="pdf3" className="focus:outline-none">
-                      <div className={`rounded-lg overflow-hidden border ${
-                        isDarkMode ? 'border-gray-700' : 'border-gray-300'
-                      } mb-4`}>
-                        <div className="aspect-[3/4] w-full bg-gray-100 flex items-center justify-center">
-                          <iframe 
-                            src={`${results.pdf3.replace('view', 'preview')}`}
-                            className="w-full h-full"
-                            title="معاينة شهادة اللجان"
-                          ></iframe>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => downloadPDF(results.pdf3!, 'شهادة_اللجان.pdf')}
-                        className={`w-full py-3 rounded-lg font-bold transition-all flex items-center justify-center ${
-                          isDarkMode 
-                            ? 'bg-green-700 hover:bg-green-800 text-white' 
-                            : 'bg-green-600 hover:bg-green-700 text-white'
-                        }`}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                          <polyline points="7 10 12 15 17 10"></polyline>
-                          <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        تحميل شهادة اللجان
-                      </button>
-                    </TabsContent>
-                  )}
-                </Tabs>
-              ) : (
-                <div className={`text-center p-8 rounded-lg border ${
-                  isDarkMode ? 'border-gray-700 bg-gray-800/50 text-gray-300' : 'border-gray-300 bg-gray-50 text-gray-600'
-                }`}>
-                  <p>لا توجد شهادات متاحة حالياً</p>
-                  <p className="text-sm mt-2">الشهادات والبطاقات غير جاهزة بعد، يرجى المحاولة لاحقاً</p>
-                </div>
-              )}
-              
-              <button
-                onClick={restartProcess}
-                className={`w-full py-2 rounded-lg font-medium text-sm transition-all ${
-                  isDarkMode 
-                    ? 'bg-transparent text-gray-300 hover:text-white' 
-                    : 'bg-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                تسجيل جديد
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Security script to prevent manual state changes */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            // Monitor state changes
-            (function() {
-              const stateMonitor = setInterval(() => {
-                const formSection = document.querySelector('[data-section="form"]');
-                const resultSection = document.querySelector('[data-section="result"]');
-                
-                if (formSection && window.getComputedStyle(formSection).display !== 'none' && !formSection.hasAttribute('data-allowed')) {
-                  formSection.style.display = 'none';
-                }
-                
-                if (resultSection && window.getComputedStyle(resultSection).display !== 'none' && !resultSection.hasAttribute('data-allowed')) {
-                  resultSection.style.display = 'none';
-                }
-              }, 100);
-            })();
-          `
-        }}
-      />
-
-      {/* Script for particles.js */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            document.addEventListener('DOMContentLoaded', function() {
-              if (typeof particlesJS !== 'undefined') {
-                particlesJS('particles', {
-                  particles: {
-                    number: { value: 60 },
-                    color: { value: document.body.classList.contains('dark-mode') ? '#ffffff' : '#6366f1' },
-                    opacity: { value: 0.3 },
-                    size: { value: 3 },
-                    move: { enable: true, speed: 1 }
-                  }
-                });
-              }
-            });
-          `
-        }}
-      />
-    </div>
-  );
-};
-
-export default Index;
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v
