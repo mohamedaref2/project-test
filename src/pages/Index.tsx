@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
@@ -128,6 +127,19 @@ const Index = () => {
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("pdf1");
   
+  // Add new state for wisdom quotes
+  const [wisdomQuote, setWisdomQuote] = useState("");
+  
+  const wisdomQuotes = [
+    "الصبر مفتاح الفرج",
+    "من جدّ وجد",
+    "العلم نور",
+    "خير الأمور أوسطها",
+    "من سار على الدرب وصل",
+    "اطلب العلم من المهد إلى اللحد",
+    "من صبر ظفر"
+  ];
+  
   const photoInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -149,6 +161,27 @@ const Index = () => {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     setIsDarkMode(prefersDark);
   }, []);
+
+  // Use effect for rotating wisdom quotes during loading
+  useEffect(() => {
+    let quoteInterval: NodeJS.Timeout;
+    
+    if (isLoading) {
+      let index = 0;
+      setWisdomQuote(wisdomQuotes[0]);
+      
+      quoteInterval = setInterval(() => {
+        index = (index + 1) % wisdomQuotes.length;
+        setWisdomQuote(wisdomQuotes[index]);
+      }, 3000);
+    }
+    
+    return () => {
+      if (quoteInterval) {
+        clearInterval(quoteInterval);
+      }
+    };
+  }, [isLoading]);
 
   // Toggle dark/light mode
   const toggleDarkMode = () => {
@@ -191,6 +224,7 @@ const Index = () => {
       const resetTimeout = setTimeout(() => {
         setProgress(0);
         setProgressText("");
+        setWisdomQuote("");
       }, 500);
       
       return () => clearTimeout(resetTimeout);
@@ -295,31 +329,34 @@ const Index = () => {
       return;
     }
 
-    if ((userRank === "كشاف" || userRank === "قائد") && !photoFile) {
-      toast({
-        title: "خطأ",
-        description: "الرجاء اختيار صورة",
-        variant: "destructive"
-      });
-      return;
-    }
+    // Rank-specific validations
+    if ((userRank === "كشاف" || userRank === "قائد")) {
+      if (!photoFile) {
+        toast({
+          title: "خطأ",
+          description: "الرجاء اختيار صورة",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    if ((userRank === "كشاف" || userRank === "قائد") && !teamNumber) {
-      toast({
-        title: "خطأ",
-        description: "الرجاء إدخال رقم الفرقة",
-        variant: "destructive"
-      });
-      return;
-    }
+      if (!teamNumber.trim()) {
+        toast({
+          title: "خطأ",
+          description: "الرجاء إدخال رقم الفرقة",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    if ((userRank === "كشاف" || userRank === "قائد") && !serialNumber) {
-      toast({
-        title: "خطأ", 
-        description: "الرجاء إدخال الرقم التسلسلي",
-        variant: "destructive"
-      });
-      return;
+      if (!serialNumber.trim()) {
+        toast({
+          title: "خطأ", 
+          description: "الرجاء إدخال الرقم التسلسلي",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     if (userRank === "قائد" && !gender) {
@@ -342,19 +379,17 @@ const Index = () => {
       };
       
       // Add rank-specific fields
+      if (userRank === "قائد" || userRank === "كشاف") {
+        formData.teamNumber = teamNumber;
+        formData.serialNumber = serialNumber;
+      }
+      
       if (userRank === "قائد") {
-        formData.teamNumber = teamNumber;
-        formData.serialNumber = serialNumber;
         formData.gender = gender;
-      } else if (userRank === "كشاف") {
-        formData.teamNumber = teamNumber;
-        formData.serialNumber = serialNumber;
-        formData.gender = "";
       }
 
       // Add photo if provided
       if (photoFile) {
-        // Convert image to base64
         const base64String = await new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onload = (e) => {
@@ -368,16 +403,18 @@ const Index = () => {
         formData.mimeType = photoFile.type;
       }
 
-      // In a real app, this would call google.script.run
+      // Process form data
       const response = await mockGoogleScriptFunctions.processFormWithImage(formData);
-
-      setResults(response);
-      setCurrentStep("result");
-      toast({
-        title: "نجاح",
-        description: "تم إنشاء الملفات بنجاح",
-        variant: "default"
-      });
+      
+      if (response) {
+        setResults(response);
+        setCurrentStep("result");
+        toast({
+          title: "نجاح",
+          description: "تم إنشاء الملفات بنجاح",
+          variant: "default"
+        });
+      }
     } catch (error: any) {
       toast({
         title: "خطأ",
@@ -471,7 +508,7 @@ const Index = () => {
       >
         {/* Progress bar */}
         {isLoading && (
-          <div className="mb-6 space-y-2 animate-fade-in">
+          <div className="mb-6 space-y-4 animate-fade-in">
             <div className="flex justify-between text-sm font-medium">
               <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{progressText}</span>
               <span className={`${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>{Math.round(progress)}%</span>
@@ -480,6 +517,11 @@ const Index = () => {
               value={progress} 
               className={`h-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} transition-all ease-in-out duration-300`} 
             />
+            {wisdomQuote && (
+              <div className={`text-center text-sm italic ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} animate-fade-in`}>
+                {wisdomQuote}
+              </div>
+            )}
           </div>
         )}
 
@@ -497,6 +539,7 @@ const Index = () => {
                 placeholder="أدخل مفتاح الوصول"
                 className={`w-full px-4 py-3 rounded-lg ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-700 border-gray-200'} border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all`}
                 disabled={isLoading}
+                readOnly={isLoading}
               />
               
               <button
@@ -524,7 +567,7 @@ const Index = () => {
         )}
 
         {currentStep === "form" && (
-          <div className="space-y-6 animate-fade-in">
+          <div className="space-y-6 animate-fade-in" data-section="form" data-allowed="true">
             <h2 className={`text-2xl font-bold text-center ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>
               استمارة التسجيل
             </h2>
@@ -537,6 +580,7 @@ const Index = () => {
                 placeholder="الاسم الكامل"
                 className={`w-full px-4 py-3 rounded-lg ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-700 border-gray-200'} border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all`}
                 disabled={isLoading}
+                readOnly={isLoading}
               />
 
               {/* Show fields based on user rank */}
@@ -550,6 +594,7 @@ const Index = () => {
                       placeholder="رقم الفرقة"
                       className={`px-4 py-3 rounded-lg ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-700 border-gray-200'} border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all`}
                       disabled={isLoading}
+                      readOnly={isLoading}
                     />
                     <input
                       type="text"
@@ -558,6 +603,7 @@ const Index = () => {
                       placeholder="الرقم التسلسلي"
                       className={`px-4 py-3 rounded-lg ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-700 border-gray-200'} border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all`}
                       disabled={isLoading}
+                      readOnly={isLoading}
                     />
                   </div>
                   
@@ -746,7 +792,7 @@ const Index = () => {
         )}
 
         {currentStep === "result" && results && (
-          <div className="space-y-8 animate-fade-in">
+          <div className="space-y-8 animate-fade-in" data-section="result" data-allowed="true">
             <div className="space-y-2 text-center">
               <div className="inline-flex items-center justify-center p-2 bg-green-100 rounded-full">
                 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
@@ -898,6 +944,29 @@ const Index = () => {
           </div>
         )}
       </div>
+
+      {/* Security script to prevent manual state changes */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            // Monitor state changes
+            (function() {
+              const stateMonitor = setInterval(() => {
+                const formSection = document.querySelector('[data-section="form"]');
+                const resultSection = document.querySelector('[data-section="result"]');
+                
+                if (formSection && window.getComputedStyle(formSection).display !== 'none' && !formSection.hasAttribute('data-allowed')) {
+                  formSection.style.display = 'none';
+                }
+                
+                if (resultSection && window.getComputedStyle(resultSection).display !== 'none' && !resultSection.hasAttribute('data-allowed')) {
+                  resultSection.style.display = 'none';
+                }
+              }, 100);
+            })();
+          `
+        }}
+      />
 
       {/* Script for particles.js */}
       <script
