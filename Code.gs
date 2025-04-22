@@ -147,7 +147,7 @@ function validateKey(key) {
     };
 
   } catch (error) {
-    Logger.log('validateKey error: ' + error.message);
+    Logger.log('validateKey error: ' + error);
     throw error;
   }
 }
@@ -171,7 +171,7 @@ function getPreviousFiles(key) {
         const pdf1Url = row[2] || null;
         const pdf2Url = row[3] || null;
         const pdf3Url = row[4] || null;
-        const date = row[5] instanceof Date ? row[5] : new Date();
+        const date = row[10] instanceof Date ? row[10] : new Date();
         
         return {
           name: row[0],
@@ -179,6 +179,9 @@ function getPreviousFiles(key) {
           pdf1: pdf1Url,
           pdf2: pdf2Url,
           pdf3: pdf3Url,
+          teamNumber: row[5] || '',
+          serialNumber: row[6] || '',
+          gender: row[7] || '',
           date: date.toLocaleDateString('ar-SA')
         };
       });
@@ -199,21 +202,46 @@ function processFormWithImage(data) {
     // تنظيف الملفات القديمة قبل إنشاء ملفات جديدة
     cleanupOldFiles();
     
-    // استخراج البيانات
-    const { name, base64Image, mimeType, key, rank, gender } = data;
-    Logger.log(base64Image);
+    // استخراج البيانات المشتركة
+    const { name, key, rank } = data;
+    
     // التحقق من الاسم
     if (!name || name.length > 100) {
       throw('الاسم غير صحيح أو طويل جداً');
     }
     
-    // حفظ الصورة في Google Drive
-    imageId = saveImage(base64Image, mimeType);
+    // معالجة بيانات محددة لكل رتبة
+    let teamNumber = '';
+    let serialNumber = '';
+    let gender = '';
     
-    if (!imageId) {
-      throw('فشل في حفظ الصورة');
+    if (rank === 'قائد') {
+      teamNumber = data.teamNumber || '';
+      serialNumber = data.serialNumber || '';
+      gender = data.gender || '';
+      
+      // حفظ الصورة إذا تم تقديمها
+      if (data.base64Image && data.mimeType) {
+        imageId = saveImage(data.base64Image, data.mimeType);
+        if (!imageId) {
+          throw('فشل في حفظ الصورة');
+        }
+      }
+    } 
+    else if (rank === 'كشاف') {
+      teamNumber = data.teamNumber || '';
+      serialNumber = data.serialNumber || '';
+      
+      // حفظ الصورة إذا تم تقديمها
+      if (data.base64Image && data.mimeType) {
+        imageId = saveImage(data.base64Image, data.mimeType);
+        if (!imageId) {
+          throw('فشل في حفظ الصورة');
+        }
+      }
     }
-    
+    // لا نحتاج لأي معلومات إضافية للجان
+
     // تحديد أي ملفات PDF سيتم إنشاؤها استنادًا إلى الرتبة
     let pdf1Url = null;
     let pdf2Url = null;
@@ -225,9 +253,12 @@ function processFormWithImage(data) {
       pdf1Url = pdf1Result.pdf.getUrl();
       tempDocIds = [...tempDocIds, ...pdf1Result.tempIds];
       
-      const pdf2Result = createPdfWithImageFromTemplate(PDF_TEMPLATE_ID_2, name, imageId, gender);
-      pdf2Url = pdf2Result.pdf.getUrl();
-      tempDocIds = [...tempDocIds, ...pdf2Result.tempIds];
+      // لإنشاء PDF الثاني، نحتاج إلى صورة
+      if (imageId) {
+        const pdf2Result = createPdfWithImageFromTemplate(PDF_TEMPLATE_ID_2, name, imageId, gender);
+        pdf2Url = pdf2Result.pdf.getUrl();
+        tempDocIds = [...tempDocIds, ...pdf2Result.tempIds];
+      }
     }
     
     if (rank === 'لجان' || rank === 'قائد') {
@@ -236,9 +267,24 @@ function processFormWithImage(data) {
       tempDocIds = [...tempDocIds, ...pdf3Result.tempIds];
     }
     
+    // تحديد الملفات بسماح المشاركة للجميع
+    setFilePermissionsForEveryone(pdf1Url, pdf2Url, pdf3Url);
+    
     // تسجيل البيانات في جدول البيانات
     const logSheet = getSpreadsheet().getSheetByName('السجلات');
-    logSheet.appendRow([name, key, pdf1Url, pdf2Url, pdf3Url, new Date()]);
+    logSheet.appendRow([
+      name,           // الاسم
+      key,            // المفتاح
+      pdf1Url,        // رابط PDF1
+      pdf2Url,        // رابط PDF2
+      pdf3Url,        // رابط PDF3
+      teamNumber,     // رقم الفرقة
+      serialNumber,   // الرقم التسلسلي
+      gender,         // النوع
+      '',             // حقل احتياطي
+      '',             // حقل احتياطي
+      new Date()      // التاريخ
+    ]);
     
     // تحديث حالة الاستخدام للمفتاح (إذا لم يكن قائد)
     if (rank !== 'قائد') {
@@ -255,7 +301,7 @@ function processFormWithImage(data) {
     
   } catch (e) {
     Logger.log('خطأ في معالجة النموذج: ' + e.message);
-    throw('فشل معالجة النموذج');
+    throw('فشل معالجة النموذج: ' + e.message);
   } finally {
     // حذف ملف الصورة المؤقت (إذا كان لا يزال موجودًا)
     if (imageId) {
@@ -274,6 +320,70 @@ function processFormWithImage(data) {
         Logger.log('فشل حذف المستند المؤقت: ' + err.message);
       }
     });
+  }
+}
+
+// ========== تعيين صلاحيات الملفات للجميع ==========
+function setFilePermissionsForEveryone(pdf1Url, pdf2Url, pdf3Url) {
+  if (pdf1Url) {
+    try {
+      const fileId = pdf1Url.match(/[-\w]{25,}/);
+      if (fileId && fileId[0]) {
+        DriveApp.getFileById(fileId[0]).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      }
+    } catch (e) {
+      Logger.log('خطأ في تعيين الصلاحيات للملف الأول: ' + e.message);
+    }
+  }
+  
+  if (pdf2Url) {
+    try {
+      const fileId = pdf2Url.match(/[-\w]{25,}/);
+      if (fileId && fileId[0]) {
+        DriveApp.getFileById(fileId[0]).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      }
+    } catch (e) {
+      Logger.log('خطأ في تعيين الصلاحيات للملف الثاني: ' + e.message);
+    }
+  }
+  
+  if (pdf3Url) {
+    try {
+      const fileId = pdf3Url.match(/[-\w]{25,}/);
+      if (fileId && fileId[0]) {
+        DriveApp.getFileById(fileId[0]).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      }
+    } catch (e) {
+      Logger.log('خطأ في تعيين الصلاحيات للملف الثالث: ' + e.message);
+    }
+  }
+}
+
+// ========== الحصول على النتائج السابقة للمفتاح المستخدم ==========
+function getPreviousResults(key) {
+  try {
+    const logSheet = getSpreadsheet().getSheetByName('السجلات');
+    if (!logSheet) {
+      return null;
+    }
+
+    // البحث عن السجل بالمفتاح
+    const records = logSheet.getDataRange().getValues();
+    for (let i = 0; i < records.length; i++) {
+      if (records[i][1].toString().trim() === key.toString().trim()) {
+        // إرجاع روابط PDF
+        return {
+          pdf1: records[i][2] || null,
+          pdf2: records[i][3] || null,
+          pdf3: records[i][4] || null
+        };
+      }
+    }
+
+    return null;
+  } catch (e) {
+    Logger.log('خطأ في استرجاع النتائج السابقة: ' + e.message);
+    return null;
   }
 }
 
@@ -429,3 +539,4 @@ function setupTrigger() {
 function onOpen() {
   cleanupOldFiles();
 }
+

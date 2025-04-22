@@ -5,36 +5,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>نظام التسجيل الإلكتروني</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
   <style>
     :root {
       /* Light theme */
-      --bg-gradient-light: linear-gradient(135deg, #eaf2ff, #f5f7fa);
-      --card-bg-light: rgba(255, 255, 255, 0.85);
+      --bg-gradient-light: linear-gradient(135deg, #f3f4f8, #ffffff);
+      --card-bg-light: rgba(255, 255, 255, 0.95);
       --text-light: #1a202c;
-      --primary-light: #3182ce;
-      --secondary-light: #6b46c1;
-      --accent-light: #00a0dc;
-      --success-light: #38a169;
-      --error-light: #e53e3e;
-      --card-shadow-light: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-      --input-bg-light: rgba(255, 255, 255, 0.9);
+      --primary-light: #4a6cf7;
+      --secondary-light: #7b64ec;
+      --accent-light: #00aeff;
+      --success-light: #07bc0c;
+      --error-light: #ff4d4f;
+      --card-shadow-light: 0 10px 30px rgba(74, 108, 247, 0.15);
+      --input-bg-light: rgba(255, 255, 255, 0.95);
       --input-border-light: rgba(203, 213, 224, 0.5);
-      --backdrop-light: rgba(255, 255, 255, 0.5);
-
-      /* Dark theme */
-      --bg-gradient-dark: linear-gradient(135deg, #1a202c, #2d3748);
-      --card-bg-dark: rgba(45, 55, 72, 0.85);
-      --text-dark: #f7fafc;
-      --primary-dark: #63b3ed;
-      --secondary-dark: #b794f4;
-      --accent-dark: #4fd1c5;
-      --success-dark: #68d391;
-      --error-dark: #fc8181;
-      --card-shadow-dark: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
-      --input-bg-dark: rgba(45, 55, 72, 0.8);
-      --input-border-dark: rgba(160, 174, 192, 0.2);
-      --backdrop-dark: rgba(26, 32, 44, 0.5);
+      --backdrop-light: rgba(255, 255, 255, 0.8);
       
       /* Active theme (defaults to light) */
       --bg-gradient: var(--bg-gradient-light);
@@ -52,18 +38,18 @@
     }
     
     [data-theme="dark"] {
-      --bg-gradient: var(--bg-gradient-dark);
-      --card-bg: var(--card-bg-dark);
-      --text: var(--text-dark);
-      --primary: var(--primary-dark);
-      --secondary: var(--secondary-dark);
-      --accent: var(--accent-dark);
-      --success: var(--success-dark);
-      --error: var(--error-dark);
-      --card-shadow: var(--card-shadow-dark);
-      --input-bg: var(--input-bg-dark);
-      --input-border: var(--input-border-dark);
-      --backdrop: var(--backdrop-dark);
+      --bg-gradient: linear-gradient(135deg, #1e293b, #0f172a);
+      --card-bg: rgba(30, 41, 59, 0.95);
+      --text: #f8fafc;
+      --primary: #7b64ec;
+      --secondary: #4a6cf7;
+      --accent: #38bdf8;
+      --success: #22c55e;
+      --error: #ef4444;
+      --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      --input-bg: rgba(30, 41, 59, 0.9);
+      --input-border: rgba(148, 163, 184, 0.2);
+      --backdrop: rgba(15, 23, 42, 0.7);
     }
 
     * {
@@ -106,23 +92,26 @@
       position: relative;
       background: var(--card-bg);
       backdrop-filter: blur(15px);
-      border-radius: 20px;
+      border-radius: 1.5rem;
       padding: 2.5rem;
       width: 95%;
-      max-width: 550px;
+      max-width: 600px;
       box-shadow: var(--card-shadow);
       overflow: hidden;
       z-index: 10;
       transform: translateY(0);
       animation: cardEntrance 1s ease-out forwards;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .header-image {
       width: 100%;
       max-width: 100%;
       height: auto;
-      margin-bottom: 1.5rem;
-      border-radius: 15px 15px 0 0;
+      margin: -2.5rem -2.5rem 1.5rem -2.5rem;
+      width: calc(100% + 5rem);
+      border-radius: 1.5rem 1.5rem 0 0;
+      object-fit: cover;
     }
 
     @keyframes cardEntrance {
@@ -171,6 +160,8 @@
       border-radius: 50%;
       z-index: 100;
       transition: transform 0.3s;
+      background-color: var(--card-bg);
+      box-shadow: var(--card-shadow);
     }
 
     .theme-toggle:hover {
@@ -210,7 +201,7 @@
       padding: 1rem;
       padding-right: 2.5rem;
       border: 1px solid var(--input-border);
-      border-radius: 12px;
+      border-radius: 1rem;
       background: var(--input-bg);
       color: var(--text);
       font-size: 1rem;
@@ -222,7 +213,7 @@
     .form-input:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
+      box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.2);
       transform: translateY(-2px);
     }
 
@@ -259,7 +250,7 @@
       background: var(--input-bg);
       color: var(--text);
       border: 2px dashed var(--input-border);
-      border-radius: 12px;
+      border-radius: 1rem;
       cursor: pointer;
       transition: all 0.3s ease;
     }
@@ -282,7 +273,7 @@
     .image-preview {
       max-width: 100%;
       max-height: 200px;
-      border-radius: 8px;
+      border-radius: 0.5rem;
       box-shadow: var(--card-shadow);
     }
 
@@ -291,7 +282,7 @@
       padding: 1rem;
       margin: 1rem 0;
       border: none;
-      border-radius: 12px;
+      border-radius: 1rem;
       background: linear-gradient(135deg, var(--primary), var(--secondary));
       color: white;
       font-weight: 600;
@@ -369,7 +360,7 @@
       display: inline-block;
       width: 35px;
       height: 35px;
-      border: 4px solid rgba(49, 130, 206, 0.2);
+      border: 4px solid rgba(74, 108, 247, 0.2);
       border-radius: 50%;
       border-top-color: var(--primary);
       animation: spin 1s ease-in-out infinite;
@@ -401,23 +392,28 @@
       position: fixed;
       bottom: 20px;
       left: 50%;
-      transform: translateX(-50%);
+      transform: translateX(-50%) translateY(100px);
       padding: 0.75rem 1.5rem;
       border-radius: 8px;
       color: white;
       font-weight: 600;
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      animation: slideUp 0.3s ease forwards;
       z-index: 999;
       display: flex;
       align-items: center;
       justify-content: center;
       min-width: 250px;
       text-align: center;
-      display: none;
       align-content: center;
       flex-wrap: nowrap;
       height: 70px;
+      opacity: 0;
+      transition: transform 0.5s ease, opacity 0.5s ease;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
     }
 
     .toast.success {
@@ -434,29 +430,21 @@
       height: 25px;
       width: 25px;
     }
+    
     .toast.success .toast-icon {
-    color: #ffffff;
+      color: #ffffff;
     }
-  
+    
     .toast.error .toast-icon {
       color: #ffffff;
     }
+    
     .toast-icon {
-        fill: none;
-        stroke: currentcolor;
-        stroke-width: 2;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
-    @keyframes slideUp {
-      from { 
-        opacity: 0;
-        transform: translate(-50%, 20px);
-      }
-      to { 
-        opacity: 1;
-        transform: translate(-50%, 0);
-      }
+      fill: none;
+      stroke: currentcolor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .result-section {
@@ -522,147 +510,209 @@
       background: var(--primary);
     }
 
-    .pdf-preview-container {
-      margin: 1.5rem 0;
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      border-radius: 0.75rem;
+      background-color: var(--backdrop);
+    }
+    
+    .tab-button {
+      padding: 0.75rem 1.25rem;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-family: 'Cairo', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex: 1;
+      text-align: center;
+      margin: 0 0.25rem;
+      position: relative;
+    }
+    
+    .tab-button.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(74, 108, 247, 0.3);
+    }
+    
+    .tab-content {
+      display: none;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      background: var(--card-bg);
+      box-shadow: var(--card-shadow);
+      margin: 0.5rem 0 1.5rem;
+      transition: all 0.3s;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .tab-content.active {
+      display: block;
     }
 
     .pdf-preview {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      padding: 1rem;
-      border-radius: 12px;
-      background: var(--input-bg);
-      box-shadow: var(--card-shadow);
+      width: 100%;
+      text-align: center;
     }
-
+    
     .pdf-preview-title {
       font-weight: 600;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
       color: var(--primary);
+      font-size: 1.1rem;
     }
-
-    .pdf-preview-frame {
+    
+    .pdf-container {
+      position: relative;
       width: 100%;
-      height: 200px;
-      border: none;
-      border-radius: 8px;
+      height: 0;
+      padding-bottom: 120%;
+      overflow: hidden;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       margin-bottom: 1rem;
     }
-
-    .pdf-preview-button {
+    
+    .pdf-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #f8f9fa;
+    }
+    
+    .download-button {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      background: linear-gradient(135deg, var(--accent), var(--primary));
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
       color: white;
-      font-weight: 600;
       border: none;
+      border-radius: 0.5rem;
+      font-family: 'Cairo', sans-serif;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s;
+      text-decoration: none;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(74, 108, 247, 0.2);
     }
-
-    .pdf-preview-button:hover {
+    
+    .download-button svg {
+      margin-left: 0.5rem;
+    }
+    
+    .download-button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .pdf-preview-icon {
-      margin-right: 0.5rem;
+      box-shadow: 0 6px 15px rgba(74, 108, 247, 0.3);
     }
 
     .history-section {
       margin-top: 2rem;
-      padding-top: 2rem;
+      padding-top: 0.5rem;
       border-top: 1px solid var(--input-border);
     }
-
+    
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
     .history-title {
-      text-align: center;
       font-weight: 600;
-      margin-bottom: 1rem;
       color: var(--primary);
+      font-size: 1.1rem;
+      margin: 0;
     }
-
+    
+    .history-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease;
+    }
+    
+    .history-content.open {
+      max-height: 1000px;
+      margin-top: 0.5rem;
+    }
+    
     .history-item {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
       padding: 1rem;
-      border-radius: 12px;
-      background: var(--input-bg);
+      border-radius: 0.75rem;
+      background: var(--backdrop);
       box-shadow: var(--card-shadow);
+      animation: fadeIn 0.3s;
     }
-
+    
     .history-date {
       font-weight: 600;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
       color: var(--accent);
       text-align: center;
+      font-size: 0.9rem;
     }
-
+    
     .history-buttons {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 0.5rem;
     }
-
+    
     .history-button {
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0.5rem;
-      border-radius: 8px;
-      background: var(--backdrop);
+      border-radius: 0.5rem;
+      background: var(--card-bg);
       color: var(--text);
       font-weight: 600;
+      font-size: 0.85rem;
       border: 1px solid var(--input-border);
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s;
+      text-decoration: none;
     }
-
+    
     .history-button:hover {
       background: var(--primary);
       color: white;
       border-color: var(--primary);
     }
-
-    .download-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      margin-top: 2rem;
+    
+    .chevron-icon {
+      transition: transform 0.3s;
     }
-
-    .download-button {
-      padding: 1rem;
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid var(--primary);
-      background: transparent;
-      color: var(--text);
-      transition: all 0.3s ease;
-    }
-
-    .download-button:hover {
-      background: var(--primary);
-      color: white;
-      transform: translateY(-3px);
-    }
-
-    .download-icon {
-      font-size: 1.5rem;
-      margin-bottom: 0.5rem;
+    
+    .rotate-180 {
+      transform: rotate(180deg);
     }
 
     /* Responsive Styles */
     @media (max-width: 576px) {
       .card {
         padding: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      
+      .header-image {
+        margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+        width: calc(100% + 3rem);
       }
       
       h1 {
@@ -673,16 +723,17 @@
         font-size: 1.3rem;
       }
       
-      .download-buttons {
-        grid-template-columns: 1fr;
+      .tab-button {
+        padding: 0.5rem;
+        font-size: 0.85rem;
       }
-
-      .pdf-preview-frame {
-        height: 150px;
+      
+      .tab-content {
+        padding: 1rem;
       }
-
-      .history-buttons {
-        grid-template-columns: 1fr;
+      
+      .pdf-container {
+        padding-bottom: 140%;
       }
     }
     
@@ -714,6 +765,25 @@
     .section.visible {
       opacity: 1;
       transform: translateY(0);
+    }
+    
+    /* Scrollbar styles */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--secondary);
     }
   </style>
 </head>
@@ -765,13 +835,39 @@
       <div id="rankLabel" class="rank-label"></div>
       
       <div class="input-wrapper">
-        <input type="text" class="form-input" id="fullName" placeholder="الاسم الكامل">
+        <input type="text" class="form-input" id="fullName" placeholder="الاسم الثلاثي">
         <span class="input-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
         </span>
+      </div>
+      
+      <!-- حقول إضافية للقائد والكشاف -->
+      <div id="additionalFieldsSection" style="display: none;">
+        <div class="input-wrapper">
+          <input type="text" class="form-input" id="teamNumber" placeholder="رقم الفرقة">
+          <span class="input-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <polyline points="17 11 19 13 23 9"></polyline>
+            </svg>
+          </span>
+        </div>
+        
+        <div class="input-wrapper">
+          <input type="text" class="form-input" id="serialNumber" placeholder="الرقم التسلسلي">
+          <span class="input-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="9" x2="20" y2="9"></line>
+              <line x1="4" y1="15" x2="20" y2="15"></line>
+              <line x1="10" y1="3" x2="8" y2="21"></line>
+              <line x1="16" y1="3" x2="14" y2="21"></line>
+            </svg>
+          </span>
+        </div>
       </div>
       
       <!-- اختيار النوع للقادة -->
@@ -783,25 +879,28 @@
         </label>
         <label class="radio-option">
           <input type="radio" name="leaderType" value="القائدة الكشفية">
-          <span class="radio-custom"></span>
+            <span class="radio-custom"></span>
           القائدة الكشفية
         </label>
       </div>
       
-      <div class="file-input-wrapper">
-        <label for="photoUpload" class="file-input-label" id="dropArea">
-          <span class="file-input-text">اختر صورة شخصية</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-        </label>
-        <input type="file" accept=".jpg, .jpeg, .png" id="photoUpload" class="form-input" aria-label="حمل صورة شخصية">
-      </div>
-      
-      <div id="imagePreview" class="image-preview-wrapper">
-        <img src="" alt="معاينة الصورة" class="image-preview" id="previewImg">
+      <!-- حقل الصورة للقائد والكشاف -->
+      <div id="photoSection" style="display: none;">
+        <div class="file-input-wrapper">
+          <label for="photoUpload" class="file-input-label" id="dropArea">
+            <span class="file-input-text">اختر صورة شخصية</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+          </label>
+          <input type="file" accept=".jpg, .jpeg, .png" id="photoUpload" class="form-input" aria-label="حمل صورة شخصية">
+        </div>
+        
+        <div id="imagePreview" class="image-preview-wrapper">
+          <img src="" alt="معاينة الصورة" class="image-preview" id="previewImg">
+        </div>
       </div>
       
       <div id="progressBarContainer" class="progress-bar">
@@ -816,8 +915,17 @@
 
       <!-- سجل الملفات السابقة للقادة -->
       <div id="fileHistorySection" class="history-section" style="display: none;">
-        <h3 class="history-title">سجل الملفات السابقة</h3>
-        <div id="historyItems"></div>
+        <div class="history-header" id="historyHeader">
+          <h3 class="history-title">سجل الملفات السابقة</h3>
+          <div class="chevron-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+        <div id="historyContent" class="history-content">
+          <div id="historyItems"></div>
+        </div>
       </div>
     </div>
 
@@ -832,8 +940,9 @@
       <h2>تمت العملية بنجاح! 🎉</h2>
       <p>تم إنشاء المستندات الخاصة بك، يمكنك معاينتها وتحميلها الآن</p>
       
-      <!-- معاينة ملفات PDF -->
-      <div id="pdfPreviewsContainer" class="pdf-preview-container"></div>
+      <!-- معاينة ملفات PDF - Tabs -->
+      <div id="pdfTabs" class="tabs"></div>
+      <div id="pdfTabContents"></div>
       
       <button id="newRegistrationBtn" class="button" style="margin-top: 2rem;">
         تسجيل جديد
@@ -859,14 +968,14 @@
       particlesJS('particles-js', {
         particles: {
           number: { value: 80, density: { enable: true, value_area: 800 } },
-          color: { value: '#3182ce' },
+          color: { value: '#4a6cf7' },
           shape: { type: 'circle' },
           opacity: { value: 0.5, random: false },
           size: { value: 3, random: true },
           line_linked: {
             enable: true,
             distance: 150,
-            color: '#3182ce',
+            color: '#4a6cf7',
             opacity: 0.4,
             width: 1
           },
@@ -942,7 +1051,7 @@
       
       // تحديث لون الجزيئات
       function updateParticlesColor(theme) {
-        const color = theme === 'dark' ? '#63b3ed' : '#3182ce';
+        const color = theme === 'dark' ? '#7b64ec' : '#4a6cf7';
         if (window.pJSDom && window.pJSDom[0]) {
           window.pJSDom[0].pJS.particles.array.forEach(particle => {
             particle.color.value = color;
@@ -1032,7 +1141,19 @@
       // ربط الأزرار
       document.getElementById('validateKeyBtn').addEventListener('click', validateKey);
       document.getElementById('submitFormBtn').addEventListener('click', submitForm);
-      document.getElementById('newRegistrationBtn').addEventListener('click', () => {location.reload();});
+      document.getElementById('newRegistrationBtn').addEventListener('click', () => {
+        window.location.reload(); // إعادة تحميل الصفحة عند النقر على "تسجيل جديد"
+      });
+      
+      // إضافة تبديل لقسم التاريخ
+      const historyHeader = document.getElementById('historyHeader');
+      const historyContent = document.getElementById('historyContent');
+      const chevronIcon = document.querySelector('.chevron-icon svg');
+      
+      historyHeader && historyHeader.addEventListener('click', function() {
+        historyContent.classList.toggle('open');
+        chevronIcon.classList.toggle('rotate-180');
+      });
       
       // ========== دوال التحقق والإرسال ==========
       
@@ -1075,8 +1196,8 @@
               setupFormBasedOnRank(response.rank, response.used);
               
               // التحقق من وجود ملفات سابقة للقادة
-              if (response.rank === 'قائد') {
-                loadPreviousFiles(key);
+              if (response.previousFiles && response.previousFiles.length > 0) {
+                loadPreviousFiles(response.previousFiles);
               }
               
               // الانتقال إلى صفحة النموذج
@@ -1102,7 +1223,7 @@
             validateBtn.disabled = false;
             keyInput.disabled = false;
             
-            errMsg.textContent = error.message || 'حدث خطأ في الخادم، الرجاء المحاولة لاحقًا';
+            errMsg.textContent = error || 'حدث خطأ في الخادم، الرجاء المحاولة لاحقًا';
             errMsg.style.display = 'block';
           })
           .validateKey(key);
@@ -1112,103 +1233,111 @@
       function setupFormBasedOnRank(rank, used) {
         const rankLabel = document.getElementById('rankLabel');
         const leaderTypeSection = document.getElementById('leaderTypeSection');
+        const photoSection = document.getElementById('photoSection');
+        const additionalFieldsSection = document.getElementById('additionalFieldsSection');
+        const fileHistorySection = document.getElementById('fileHistorySection');
         
-        // تعيين عنوان الرتبة
+        // إعادة تعيين جميع العناصر
+        photoSection.style.display = 'none';
+        leaderTypeSection.style.display = 'none';
+        additionalFieldsSection.style.display = 'none';
+        fileHistorySection.style.display = 'none';
+        
+        // تعيين عنوان الرتبة والحقول المظهرة
         switch (rank) {
           case 'قائد':
             rankLabel.textContent = 'القائد الكشفي - القائدة الكشفية';
             leaderTypeSection.style.display = 'flex';
+            photoSection.style.display = 'block';
+            additionalFieldsSection.style.display = 'block';
+            fileHistorySection.style.display = 'block';
             break;
           case 'لجان':
             rankLabel.textContent = 'لجان التميز التنفيذي';
-            leaderTypeSection.style.display = 'none';
+            // لا داعي للصورة أو الحقول الإضافية
             break;
           case 'كشاف':
             rankLabel.textContent = 'الكشاف - فتاة الكشافة';
-            leaderTypeSection.style.display = 'none';
+            photoSection.style.display = 'block';
+            additionalFieldsSection.style.display = 'block';
             break;
           default:
             rankLabel.textContent = '';
-            leaderTypeSection.style.display = 'none';
         }
       }
       
-      // تحميل الملفات السابقة للقادة
-      function loadPreviousFiles(key) {
+      // تحميل الملفات السابقة
+      function loadPreviousFiles(files) {
         const historySection = document.getElementById('fileHistorySection');
         const historyItems = document.getElementById('historyItems');
         
-        google.script.run
-          .withSuccessHandler(function(history) {
-            if (history && history.length > 0) {
-              historySection.style.display = 'block';
-              historyItems.innerHTML = ''; // مسح المحتوى السابق
-              
-              // تجميع الملفات حسب التاريخ
-              const filesByDate = {};
-              history.forEach(file => {
-                const date = new Date(file.date).toLocaleDateString('ar-SA');
-                if (!filesByDate[date]) {
-                  filesByDate[date] = [];
-                }
-                filesByDate[date].push(file);
-              });
-              
-              // إنشاء عناصر التاريخ
-              for (const date in filesByDate) {
-                const historyItem = document.createElement('div');
-                historyItem.className = 'history-item';
-                
-                const dateHeader = document.createElement('div');
-                dateHeader.className = 'history-date';
-                dateHeader.textContent = date;
-                historyItem.appendChild(dateHeader);
-                
-                const buttonsContainer = document.createElement('div');
-                buttonsContainer.className = 'history-buttons';
-                
-                // إضافة أزرار التحميل لكل ملف
-                filesByDate[date].forEach((file, index) => {
-                  if (file.pdf1) {
-                    const button = document.createElement('a');
-                    button.className = 'history-button';
-                    button.href = file.pdf1;
-                    button.target = '_blank';
-                    button.textContent = `الشهادة ${index + 1}`;
-                    buttonsContainer.appendChild(button);
-                  }
-                  
-                  if (file.pdf2) {
-                    const button = document.createElement('a');
-                    button.className = 'history-button';
-                    button.href = file.pdf2;
-                    button.target = '_blank';
-                    button.textContent = `البطاقة ${index + 1}`;
-                    buttonsContainer.appendChild(button);
-                  }
-                  
-                  if (file.pdf3) {
-                    const button = document.createElement('a');
-                    button.className = 'history-button';
-                    button.href = file.pdf3;
-                    button.target = '_blank';
-                    button.textContent = `الكتيب ${index + 1}`;
-                    buttonsContainer.appendChild(button);
-                  }
-                });
-                
-                historyItem.appendChild(buttonsContainer);
-                historyItems.appendChild(historyItem);
-              }
-            } else {
-              historySection.style.display = 'none';
+        if (files && files.length > 0) {
+          historySection.style.display = 'block';
+          historyItems.innerHTML = ''; // مسح المحتوى السابق
+          
+          // تجميع الملفات حسب التاريخ
+          const filesByDate = {};
+          files.forEach(file => {
+            if (!filesByDate[file.date]) {
+              filesByDate[file.date] = [];
             }
-          })
-          .withFailureHandler(function(error) {
-            console.error('خطأ في تحميل الملفات السابقة:', error);
-            historySection.style.display = 'none';
-          })
-          .getPreviousFiles(key);
+            filesByDate[file.date].push(file);
+          });
+          
+          // إنشاء عناصر التاريخ
+          for (const date in filesByDate) {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            
+            const dateHeader = document.createElement('div');
+            dateHeader.className = 'history-date';
+            dateHeader.textContent = date;
+            historyItem.appendChild(dateHeader);
+            
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.className = 'history-buttons';
+            
+            // إضافة أزرار التحميل لكل ملف
+            filesByDate[date].forEach(file => {
+              if (file.pdf1) {
+                const button = createHistoryButton(file.pdf1, 'الشهادة');
+                buttonsContainer.appendChild(button);
+              }
+              
+              if (file.pdf2) {
+                const button = createHistoryButton(file.pdf2, 'البطاقة');
+                buttonsContainer.appendChild(button);
+              }
+              
+              if (file.pdf3) {
+                const button = createHistoryButton(file.pdf3, 'الكتيب');
+                buttonsContainer.appendChild(button);
+              }
+            });
+            
+            historyItem.appendChild(buttonsContainer);
+            historyItems.appendChild(historyItem);
+          }
+        } else {
+          historySection.style.display = 'none';
+        }
+      }
+      
+      // إنشاء زر التاريخ
+      function createHistoryButton(url, title) {
+        const button = document.createElement('a');
+        button.className = 'history-button';
+        button.href = url;
+        button.setAttribute('download', `${title}.pdf`);
+        button.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 0.5rem;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          ${title}
+        `;
+        return button;
       }
       
       // عرض النتائج السابقة للمفتاح المستخدم
@@ -1220,7 +1349,7 @@
               showSection('result');
               
               // عرض معاينات الملفات
-              displayPdfPreviews(result);
+              displayPdfTabs(result);
               
               // عرض رسالة نجاح
               showToast('تم جلب الملفات السابقة بنجاح', 'success');
@@ -1230,187 +1359,237 @@
             console.error('خطأ في استرجاع الملفات السابقة:', error);
             showToast('تعذر استرجاع الملفات السابقة', 'error');
           })
-          .getPreviousResults(key);
+          .getPreviousResults(currentKey);
       }
       
       // دالة إرسال النموذج
       function submitForm() {
         const nameInput = document.getElementById('fullName');
         const fileInput = document.getElementById('photoUpload');
+        const teamNumberInput = document.getElementById('teamNumber');
+        const serialNumberInput = document.getElementById('serialNumber');
         const submitBtn = document.getElementById('submitFormBtn');
         const submitError = document.getElementById('submitError');
         const progressBar = document.getElementById('progressBarContainer');
         const progressFill = document.getElementById('progressFill');
         
-        // الحصول على نوع القائد إذا كانت الرتبة قائد
-        let leaderType = '';
-        if (currentRank === 'قائد') {
-          const leaderTypeRadios = document.getElementsByName('leaderType');
-          for (const radio of leaderTypeRadios) {
-            if (radio.checked) {
-              leaderType = radio.value;
-              break;
-            }
-          }
-        }
-        
-        // التحقق من المدخلات
+        // الحصول على البيانات
         const name = nameInput.value.trim();
-        const file = fileInput.files[0];
-        
         submitError.style.display = 'none';
         
+        // التحقق من البيانات المطلوبة
         if (!name) {
-          submitError.textContent = 'الرجاء إدخال الاسم الكامل';
+          submitError.textContent = 'الرجاء إدخال الاسم الثلاثي';
           submitError.style.display = 'block';
           nameInput.focus();
           return;
         }
         
-        if (!file) {
-          submitError.textContent = 'الرجاء اختيار صورة شخصية';
-          submitError.style.display = 'block';
-          return;
-        }
-        
-        // التحقق من نوع ملف الصورة
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-        if (!allowedTypes.includes(file.type)) {
-          submitError.textContent = 'نوع الملف غير مدعوم. يرجى تحميل JPG أو PNG أو GIF.';
-          submitError.style.display = 'block';
-          return;
-        }
-        
-        // التحقق من حجم الملف (الحد الأقصى 5 ميجابايت)
-        const maxSize = 5 * 1024 * 1024;
-        if (file.size > maxSize) {
-          submitError.textContent = 'حجم الصورة كبير جدًا. الحد الأقصى هو 5 ميجابايت.';
-          submitError.style.display = 'block';
-          return;
-        }
-        
-        // تعطيل الزر وإظهار شريط التقدم
-        submitBtn.disabled = true;
-        progressBar.style.display = 'block';
-        
-        // قراءة الملف كـ base64
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-          // تقسيم البيانات للحصول على الـ base64 فقط
-          const base64String = e.target.result.split(',')[1];
-          
-          // تحديث شريط التقدم
-          progressFill.style.width = '30%';
-
-          // إرسال البيانات إلى الخادم
-          google.script.run
-            .withSuccessHandler(function(result) {
-              // تحديث شريط التقدم
-              progressFill.style.width = '100%';
-              
-              setTimeout(() => {
-                // إخفاء شريط التقدم
-                progressBar.style.display = 'none';
-                
-                // عرض رسالة النجاح
-                showToast('تم إنشاء المستندات بنجاح!', 'success');
-                
-                // عرض معاينات الملفات
-                displayPdfPreviews(result);
-                
-                // الانتقال إلى صفحة النتائج
-                showSection('result');
-                
-                // إعادة تعيين النموذج
-                nameInput.value = '';
-                fileInput.value = '';
-                document.getElementById('imagePreview').style.display = 'none';
-                submitBtn.disabled = false;
-              }, 500);
-            })
-            .withFailureHandler(function(error) {
-              // إخفاء شريط التقدم
-              progressBar.style.display = 'none';
-              submitBtn.disabled = false;
-              
-              // عرض رسالة الخطأ
-              submitError.textContent = error.message || 'حدث خطأ أثناء معالجة البيانات. الرجاء المحاولة مرة أخرى.';
-              submitError.style.display = 'block';
-              
-              showToast(error.message || 'حدث خطأ أثناء معالجة البيانات.', 'error');
-            })
-            .withUserObject(this)
-            .processFormWithImage({
-              name: name,
-              base64Image: base64String,
-              mimeType: file.type,
-              key: currentKey,
-              rank: currentRank,
-              gender: leaderType
-            });
-            
-          // تحديث شريط التقدم بعد إرسال البيانات
-          progressFill.style.width = '60%';
+        // إعداد البيانات المشتركة
+        const formData = {
+          name: name,
+          key: currentKey,
+          rank: currentRank
         };
         
-        reader.readAsDataURL(file);
+        // التحقق من البيانات المطلوبة بناءً على الرتبة
+        if (currentRank === 'قائد' || currentRank === 'كشاف') {
+          // إضافة رقم الفرقة والرقم التسلسلي
+          formData.teamNumber = teamNumberInput.value.trim();
+          formData.serialNumber = serialNumberInput.value.trim();
+          
+          // التحقق من الصورة
+          const file = fileInput.files[0];
+          
+          if (!file) {
+            submitError.textContent = 'الرجاء اختيار صورة شخصية';
+            submitError.style.display = 'block';
+            return;
+          }
+          
+          // التحقق من نوع ملف الصورة
+          const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+          if (!allowedTypes.includes(file.type)) {
+            submitError.textContent = 'نوع الملف غير مدعوم. يرجى تحميل JPG أو PNG أو GIF.';
+            submitError.style.display = 'block';
+            return;
+          }
+          
+          // التحقق من حجم الملف (الحد الأقصى 5 ميجابايت)
+          const maxSize = 5 * 1024 * 1024;
+          if (file.size > maxSize) {
+            submitError.textContent = 'حجم الصورة كبير جدًا. الحد الأقصى هو 5 ميجابايت.';
+            submitError.style.display = 'block';
+            return;
+          }
+          
+          // إضافة معلومات الصورة
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            // تحديث شريط التقدم
+            progressBar.style.display = 'block';
+            progressFill.style.width = '30%';
+            
+            // تقسيم البيانات للحصول على الـ base64 فقط
+            const base64String = e.target.result.split(',')[1];
+            formData.base64Image = base64String;
+            formData.mimeType = file.type;
+            
+            // إضافة معلومات إضافية للقائد
+            if (currentRank === 'قائد') {
+              const leaderTypeRadios = document.getElementsByName('leaderType');
+              for (const radio of leaderTypeRadios) {
+                if (radio.checked) {
+                  formData.gender = radio.value;
+                  break;
+                }
+              }
+            }
+            
+            // إرسال البيانات
+            submitDataToServer(formData, progressFill, progressBar, submitBtn, submitError);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          // للجان: لا نحتاج إلى صورة أو حقول إضافية
+          // عرض شريط التقدم
+          progressBar.style.display = 'block';
+          progressFill.style.width = '30%';
+          
+          // إرسال البيانات مباشرة
+          submitDataToServer(formData, progressFill, progressBar, submitBtn, submitError);
+        }
+        
+        // تعطيل الزر
+        submitBtn.disabled = true;
       }
       
-      // عرض معاينات ملفات PDF
-      function displayPdfPreviews(result) {
-        const previewsContainer = document.getElementById('pdfPreviewsContainer');
-        previewsContainer.innerHTML = '';
+      // إرسال البيانات إلى الخادم
+      function submitDataToServer(formData, progressFill, progressBar, submitBtn, submitError) {
+        google.script.run
+          .withSuccessHandler(function(result) {
+            // تحديث شريط التقدم
+            progressFill.style.width = '100%';
+            
+            setTimeout(() => {
+              // إخفاء شريط التقدم
+              progressBar.style.display = 'none';
+              
+              // عرض رسالة النجاح
+              showToast('تم إنشاء المستندات بنجاح!', 'success');
+              
+              // عرض معاينات الملفات باستخدام تبويبات
+              displayPdfTabs(result);
+              
+              // الانتقال إلى صفحة النتائج
+              showSection('result');
+              
+              // إعادة تمكين الزر
+              submitBtn.disabled = false;
+            }, 500);
+          })
+          .withFailureHandler(function(error) {
+            // إخفاء شريط التقدم
+            progressBar.style.display = 'none';
+            submitBtn.disabled = false;
+            
+            // عرض رسالة الخطأ
+            submitError.textContent = error || 'حدث خطأ أثناء معالجة البيانات. الرجاء المحاولة مرة أخرى.';
+            submitError.style.display = 'block';
+            
+            showToast(error || 'حدث خطأ أثناء معالجة البيانات.', 'error');
+          })
+          .withUserObject(this)
+          .processFormWithImage(formData);
+          
+        // تحديث شريط التقدم بعد إرسال البيانات
+        progressFill.style.width = '60%';
+      }
+      
+      // عرض معاينات ملفات PDF باستخدام تبويبات
+      function displayPdfTabs(result) {
+        const tabsContainer = document.getElementById('pdfTabs');
+        const tabContentsContainer = document.getElementById('pdfTabContents');
         
-        // إنشاء معاينة لكل ملف PDF بناءً على الرتبة
+        // مسح المحتوى السابق
+        tabsContainer.innerHTML = '';
+        tabContentsContainer.innerHTML = '';
+        
+        // تحديد الملفات المتاحة حسب الرتبة
+        let pdfs = [];
+        
         if (currentRank === 'كشاف' || currentRank === 'قائد') {
           if (result.pdf1) {
-            createPdfPreview('الشهادة', result.pdf1, previewsContainer);
+            pdfs.push({ id: 'pdf1', title: 'الشهادة', url: result.pdf1 });
           }
           
           if (result.pdf2) {
-            createPdfPreview('البطاقة', result.pdf2, previewsContainer);
+            pdfs.push({ id: 'pdf2', title: 'البطاقة', url: result.pdf2 });
           }
         }
         
         if (currentRank === 'لجان' || currentRank === 'قائد') {
           if (result.pdf3) {
-            createPdfPreview('الكتيب', result.pdf3, previewsContainer);
+            pdfs.push({ id: 'pdf3', title: 'الكتيب', url: result.pdf3 });
           }
         }
+        
+        // إنشاء التبويبات والمحتوى لكل ملف
+        pdfs.forEach((pdf, index) => {
+          // إنشاء زر التبويب
+          const tabButton = document.createElement('button');
+          tabButton.id = `tab-${pdf.id}`;
+          tabButton.className = `tab-button ${index === 0 ? 'active' : ''}`;
+          tabButton.textContent = pdf.title;
+          tabButton.onclick = () => switchTab(pdf.id);
+          tabsContainer.appendChild(tabButton);
+          
+          // إنشاء محتوى التبويب
+          const tabContent = document.createElement('div');
+          tabContent.id = `content-${pdf.id}`;
+          tabContent.className = `tab-content ${index === 0 ? 'active' : ''}`;
+          
+          // إضافة معاينة PDF
+          tabContent.innerHTML = `
+            <div class="pdf-preview">
+              <h3 class="pdf-preview-title">${pdf.title}</h3>
+              <div class="pdf-container">
+                <iframe class="pdf-frame" src="${pdf.url}" title="${pdf.title}" sandbox="allow-scripts allow-same-origin"></iframe>
+              </div>
+              <a href="${pdf.url}" download="${pdf.title}.pdf" class="download-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 0.5rem;">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                تحميل ${pdf.title}
+              </a>
+            </div>
+          `;
+          
+          tabContentsContainer.appendChild(tabContent);
+        });
       }
       
-      // إنشاء عنصر معاينة PDF
-      function createPdfPreview(title, url, container) {
-        const previewDiv = document.createElement('div');
-        previewDiv.className = 'pdf-preview';
+      // تبديل التبويبات
+      function switchTab(pdfId) {
+        // تحديث أزرار التبويبات
+        const tabButtons = document.querySelectorAll('.tab-button');
+        tabButtons.forEach(button => {
+          button.classList.remove('active');
+          if (button.id === `tab-${pdfId}`) {
+            button.classList.add('active');
+          }
+        });
         
-        const titleEl = document.createElement('div');
-        titleEl.className = 'pdf-preview-title';
-        titleEl.textContent = title;
-        previewDiv.appendChild(titleEl);
-        
-        const frame = document.createElement('iframe');
-        frame.className = 'pdf-preview-frame';
-        frame.src = url;
-        frame.title = title;
-        previewDiv.appendChild(frame);
-        
-        const button = document.createElement('a');
-        button.className = 'pdf-preview-button';
-        button.href = url;
-        button.target = '_blank';
-        button.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pdf-preview-icon">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          تحميل ${title}
-        `;
-        previewDiv.appendChild(button);
-        
-        container.appendChild(previewDiv);
+        // تحديث محتوى التبويبات
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(content => {
+          content.classList.remove('active');
+          if (content.id === `content-${pdfId}`) {
+            content.classList.add('active');
+          }
+        });
       }
       
       // دالة عرض رسالة توست
@@ -1420,7 +1599,6 @@
         const toastIcon = document.querySelector('.toast-icon');
         
         // تعيين النوع والرسالة
-        toast.style.cssText = '';
         toast.className = `toast ${type}`;
         toastMessage.textContent = message;
         
@@ -1442,19 +1620,15 @@
           `;
         }
         
-        // عرض التوست
-        toast.style.display = 'flex';
-        
-        // إخفاء التوست بعد 3 ثواني
-        setTimeout(() => {
-          toast.style.opacity = '0';
-          toast.style.transition = 'opacity 0.3s';
+        // عرض التوست مع تأثير انزلاق
+        requestAnimationFrame(() => {
+          toast.classList.add("show");
+          
+          // إخفاء التوست بعد 3 ثواني
           setTimeout(() => {
-            toast.style.display = 'none';
-            toast.style.opacity = '1';
-            toast.style.transition = '';
-          }, 300);
-        }, 3000);
+            toast.classList.remove("show");
+          }, 3000);
+        });
       }
     });
   </script>
