@@ -79,7 +79,7 @@ function validateKey(key) {
 
     // التحقق من تجاوز عدد المحاولات
     if (parseInt(cache.get(ip) || '0') >= FAILED_ATTEMPTS_LIMIT) {
-      throw new Error('تم تجاوز عدد المحاولات، الرجاء الانتظار 5 دقائق');
+      throw('تم تجاوز عدد المحاولات، الرجاء الانتظار 5 دقائق');
     }
 
     // تنسيق المفتاح
@@ -92,7 +92,7 @@ function validateKey(key) {
     const sheet = getSpreadsheet().getSheetByName('المفاتيح');
     if (!sheet) {
       Logger.log('لم يتم العثور على صفحة المفاتيح');
-      throw new Error('لا يمكن العثور على صفحة المفاتيح');
+      throw('لا يمكن العثور على صفحة المفاتيح');
     }
 
     const lastRow = sheet.getLastRow();
@@ -100,7 +100,7 @@ function validateKey(key) {
     
     if (lastRow === 0) {
       Logger.log('الصفحة فارغة');
-      throw new Error('صفحة المفاتيح فارغة');
+      throw('صفحة المفاتيح فارغة');
     }
 
     // الحصول على كافة البيانات المطلوبة
@@ -122,7 +122,7 @@ function validateKey(key) {
       // إذا لم يتم العثور على المفتاح، زيادة عداد المحاولات الخاطئة
       const attempts = parseInt(cache.get(ip) || '0') + 1;
       cache.put(ip, attempts.toString(), 5 * 60); // تخزين لمدة 5 دقائق
-      throw new Error('المفتاح غير صحيح');
+      throw('المفتاح غير صحيح');
     }
 
     // تحقق مما إذا كان المفتاح قد تم استخدامه
@@ -138,9 +138,10 @@ function validateKey(key) {
     }
 
     return {
+      isValid: true,
       key: key,
       rank: rank,
-      isUsed: isUsed,
+      used: isUsed,
       index: index + 1,  // +1 لأن الصفوف في Sheets تبدأ من 1
       previousFiles: previousFiles
     };
@@ -193,24 +194,24 @@ function getPreviousFiles(key) {
 function processFormWithImage(data) {
   let imageId = null;
   let tempDocIds = [];
-  
+
   try {
     // تنظيف الملفات القديمة قبل إنشاء ملفات جديدة
     cleanupOldFiles();
     
     // استخراج البيانات
     const { name, base64Image, mimeType, key, rank, gender } = data;
-    
+    Logger.log(base64Image);
     // التحقق من الاسم
     if (!name || name.length > 100) {
-      throw new Error('الاسم غير صحيح أو طويل جداً');
+      throw('الاسم غير صحيح أو طويل جداً');
     }
     
     // حفظ الصورة في Google Drive
     imageId = saveImage(base64Image, mimeType);
     
     if (!imageId) {
-      throw new Error('فشل في حفظ الصورة');
+      throw('فشل في حفظ الصورة');
     }
     
     // تحديد أي ملفات PDF سيتم إنشاؤها استنادًا إلى الرتبة
@@ -254,7 +255,7 @@ function processFormWithImage(data) {
     
   } catch (e) {
     Logger.log('خطأ في معالجة النموذج: ' + e.message);
-    throw new Error('فشل معالجة النموذج: ' + e.message);
+    throw('فشل معالجة النموذج');
   } finally {
     // حذف ملف الصورة المؤقت (إذا كان لا يزال موجودًا)
     if (imageId) {
@@ -277,17 +278,25 @@ function processFormWithImage(data) {
 }
 
 // ========== حفظ الصورة ==========
-function saveImage(base64String, mimeType) {
+function saveImage(base64Image, mimeType) {
   try {
-    const blob = Utilities.base64Decode(base64String);
-    const tempFolder = getTempFolder();
-    const file = tempFolder.createFile(Utilities.newBlob(blob, mimeType, `image_${Date.now()}`));
+    // لو السطر يحتوي على "data:image" بنشيل الجزء التعريفي
+    const base64Data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
+
+    // تحويل إلى Blob
+    const decoded = Utilities.base64Decode(base64Data);
+    const blob = Utilities.newBlob(decoded, mimeType, 'photo.' + mimeType.split('/')[1]);
+
+    // رفع الصورة لجوجل درايف
+    const file = DriveApp.createFile(blob);
     return file.getId();
+
   } catch (e) {
     Logger.log('خطأ في حفظ الصورة: ' + e.message);
-    throw new Error('فشل حفظ الصورة: ' + e.message);
+    throw new Error('Could not decode string.');
   }
 }
+
 
 // ========== دوال إنشاء PDF ==========
 function createPdfFromTemplate(templateId, name, gender) {
@@ -302,10 +311,10 @@ function createPdfFromTemplate(templateId, name, gender) {
     const doc = DocumentApp.openById(tempFile.getId());
     const body = doc.getBody();
     
-    // استبدال الاسم والجنس إذا وجد
+    // استبدال الاسم والنوع إذا وجد
     body.replaceText('{الاسم}', name);
     if (gender) {
-      body.replaceText('{الجنس}', gender);
+      body.replaceText('{النوع}', gender);
     }
     
     doc.saveAndClose();
@@ -318,7 +327,7 @@ function createPdfFromTemplate(templateId, name, gender) {
     return { pdf: pdfFile, tempIds: tempIds };
   } catch (e) {
     Logger.log('خطأ في إنشاء PDF: ' + e.message);
-    throw new Error('فشل إنشاء المستند: ' + e.message);
+    throw('فشل إنشاء المستند ');
   }
 }
 
@@ -334,17 +343,17 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl, gender) {
     const doc = DocumentApp.openById(tempFile.getId());
     const body = doc.getBody();
     
-    // استبدال الاسم والجنس إذا وجد
+    // استبدال الاسم والنوع إذا وجد
     body.replaceText('{الاسم}', name);
     if (gender) {
-      body.replaceText('{الجنس}', gender);
+      body.replaceText('{النوع}', gender);
     }
 
     // البحث عن مكان الصورة
     const imagePlaceholder = body.findText('{الصورة}');
     
     if (!imagePlaceholder) {
-      throw new Error('لم يتم العثور على مكان الصورة في القالب');
+      throw('لم يتم العثور على مكان الصورة في القالب');
     }
 
     const element = imagePlaceholder.getElement();
@@ -353,7 +362,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl, gender) {
 
     // التحقق من الفهرس
     if (index < 0 || index >= parent.getNumChildren()) {
-      throw new Error('موضع الصورة غير صحيح في القالب');
+      throw('موضع الصورة غير صحيح في القالب');
     }
 
     // إزالة العنصر النائب
@@ -365,7 +374,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl, gender) {
 
     // التحقق من صحة الصورة
     if (!blob || blob.getBytes().length === 0) {
-      throw new Error('ملف الصورة غير صالح أو فارغ');
+      throw('ملف الصورة غير صالح أو فارغ');
     }
 
     // إدراج الصورة مع التحكم في الحجم
@@ -376,7 +385,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl, gender) {
     const originalHeight = image.getHeight();
     
     if (originalWidth === 0 || originalHeight === 0) {
-      throw new Error('أبعاد الصورة غير صالحة');
+      throw('أبعاد الصورة غير صالحة');
     }
     
     const aspectRatio = originalWidth / originalHeight;
@@ -393,7 +402,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl, gender) {
     return { pdf: pdfFile, tempIds: tempIds };
   } catch (e) {
     Logger.log('خطأ في إنشاء PDF مع صورة: ' + e.message);
-    throw new Error('فشل إنشاء البطاقة: ' + e.message);
+    throw('فشل إنشاء البطاقة ');
   }
 }
 
