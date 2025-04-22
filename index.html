@@ -371,7 +371,7 @@
     }
 
     .progress-bar {
-      height: 6px;
+      height: 10px;
       background: rgba(160, 174, 192, 0.3);
       border-radius: 999px;
       overflow: hidden;
@@ -386,6 +386,22 @@
       background: linear-gradient(90deg, var(--primary), var(--accent));
       border-radius: 999px;
       transition: width 0.3s;
+      position: relative;
+    }
+    
+    .progress-text {
+      text-align: center;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text);
+      font-weight: 600;
+      opacity: 0.9;
+    }
+    
+    .progress-container {
+      position: relative;
+      display: none;
+      margin: 1.5rem 0;
     }
 
     .toast {
@@ -904,8 +920,11 @@
         </div>
       </div>
       
-      <div id="progressBarContainer" class="progress-bar">
-        <div id="progressFill" class="progress-fill"></div>
+      <div id="progressBarContainer" class="progress-container">
+        <div class="progress-bar">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <div class="progress-text" id="progressText"></div>
       </div>
       
       <div id="submitError" class="error-message"></div>
@@ -1128,15 +1147,67 @@
       };
       
       function showSection(sectionId) {
+        // تأكيد صالحية الانتقال بين الصفحات
+        if (sectionId === 'form' && !currentKey) {
+          // إذا حاول المستخدم الوصول إلى صفحة النموذج بدون مفتاح صالح
+          showToast('غير مصرح بالوصول المباشر', 'error');
+          window.location.reload();
+          return;
+        }
+        
+        if (sectionId === 'result' && !currentKey) {
+          // إذا حاول المستخدم الوصول إلى صفحة النتائج بدون مفتاح صالح
+          showToast('غير مصرح بالوصول المباشر', 'error');
+          window.location.reload();
+          return;
+        }
+        
+        // تخزين الصفحة الحالية في ذاكرة الجلسة (sessionStorage)
+        // لمنع التلاعب عبر أدوات المطور
+        sessionStorage.setItem('currentSection', sectionId);
+        
         Object.keys(sections).forEach(key => {
           if (key === sectionId) {
             sections[key].classList.remove('hidden');
             sections[key].classList.add('visible');
+            
+            // إضافة خاصية البيانات للمساعدة في تحديد القسم الحالي
+            sections[key].dataset.active = 'true';
           } else {
             sections[key].classList.remove('visible');
             sections[key].classList.add('hidden');
+            
+            // إزالة خاصية البيانات من الأقسام غير النشطة
+            sections[key].dataset.active = 'false';
           }
         });
+        
+        // إضافة مراقب للتغييرات على DOM للتأكد من عدم التلاعب بالأقسام
+        if (!window._sectionObserver) {
+          window._sectionObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+              if (mutation.type === 'attributes' && 
+                  (mutation.attributeName === 'class' || mutation.attributeName === 'style')) {
+                const el = mutation.target;
+                if (el.classList.contains('section') && el.dataset.active === 'false' && 
+                    !el.classList.contains('hidden')) {
+                  // إعادة تطبيق الإخفاء إذا تم العبث بالفصل
+                  el.classList.add('hidden');
+                  el.classList.remove('visible');
+                  console.warn('محاولة وصول غير مصرح بها');
+                }
+              }
+            });
+          });
+          
+          // تطبيق المراقب على جميع الأقسام
+          Object.values(sections).forEach(section => {
+            window._sectionObserver.observe(section, { 
+              attributes: true, 
+              attributeFilter: ['class', 'style'] 
+            });
+          });
+        }
       }
       
       // ربط الأزرار
@@ -1193,6 +1264,12 @@
               currentRank = response.rank;
               currentUsed = response.used;
               
+              // إذا كان المفتاح مستخدم (ليس قائد) فنحول المستخدم مباشرة إلى صفحة النتائج
+              if (response.used && response.rank !== 'قائد' && response.canAddNewRecord === false) {
+                showPreviousResults(key);
+                return;
+              }
+              
               // تهيئة صفحة النموذج بناءً على الرتبة
               setupFormBasedOnRank(response.rank, response.used);
               
@@ -1203,13 +1280,7 @@
               
               // الانتقال إلى صفحة النموذج
               showSection('form');
-              
-              // إذا كان المفتاح مستخدم، نعرض الملفات مباشرة
-              if (response.used === "1" && response.rank !== 'قائد') {
-                showPreviousResults(key);
-              }
             } else {
-              console.log('validateKey →', response);
               errMsg.textContent = 'المفتاح غير صحيح، الرجاء المحاولة مرة أخرى';
               errMsg.style.display = 'block';
               keyInput.disabled = false;
@@ -1276,48 +1347,53 @@
           historySection.style.display = 'block';
           historyItems.innerHTML = ''; // مسح المحتوى السابق
           
-          // تجميع الملفات حسب التاريخ
-          const filesByDate = {};
+          // إضافة كل مجموعة ملفات بشكل منفصل
           files.forEach(file => {
-            if (!filesByDate[file.date]) {
-              filesByDate[file.date] = [];
-            }
-            filesByDate[file.date].push(file);
-          });
-          
-          // إنشاء عناصر التاريخ
-          for (const date in filesByDate) {
+            // إنشاء عنصر للتاريخ
             const historyItem = document.createElement('div');
             historyItem.className = 'history-item';
             
+            // عنوان التاريخ والاسم
             const dateHeader = document.createElement('div');
             dateHeader.className = 'history-date';
-            dateHeader.textContent = date;
+            dateHeader.textContent = `${file.name} - ${file.date}`;
             historyItem.appendChild(dateHeader);
             
+            // حاوية الأزرار
             const buttonsContainer = document.createElement('div');
             buttonsContainer.className = 'history-buttons';
             
-            // إضافة أزرار التحميل لكل ملف
-            filesByDate[date].forEach(file => {
-              if (file.pdf1) {
-                const button = createHistoryButton(file.pdf1, 'الشهادة');
-                buttonsContainer.appendChild(button);
-              }
-              
-              if (file.pdf2) {
-                const button = createHistoryButton(file.pdf2, 'البطاقة');
-                buttonsContainer.appendChild(button);
-              }
-              
-              if (file.pdf3) {
-                const button = createHistoryButton(file.pdf3, 'الكتيب');
-                buttonsContainer.appendChild(button);
-              }
-            });
+            // التحقق من وجود كل ملف على حدة وإضافة أزرار التحميل المناسبة
+            let hasPdfs = false;
             
-            historyItem.appendChild(buttonsContainer);
-            historyItems.appendChild(historyItem);
+            if (file.pdf1) {
+              hasPdfs = true;
+              const button = createHistoryButton(file.pdf1, 'الشهادة');
+              buttonsContainer.appendChild(button);
+            }
+            
+            if (file.pdf2) {
+              hasPdfs = true;
+              const button = createHistoryButton(file.pdf2, 'البطاقة');
+              buttonsContainer.appendChild(button);
+            }
+            
+            if (file.pdf3) {
+              hasPdfs = true;
+              const button = createHistoryButton(file.pdf3, 'الكتيب');
+              buttonsContainer.appendChild(button);
+            }
+            
+            // إضافة الأزرار فقط إذا كان هناك ملف PDF واحد على الأقل
+            if (hasPdfs) {
+              historyItem.appendChild(buttonsContainer);
+              historyItems.appendChild(historyItem);
+            }
+          });
+          
+          // إذا لم يتم إضافة أي عناصر، نخفي قسم التاريخ
+          if (historyItems.children.length === 0) {
+            historySection.style.display = 'none';
           }
         } else {
           historySection.style.display = 'none';
@@ -1343,21 +1419,56 @@
       
       // عرض النتائج السابقة للمفتاح المستخدم
       function showPreviousResults(key) {
+        // عرض شريط التقدم
+        const progressContainer = document.createElement('div');
+        progressContainer.className = 'progress-container';
+        progressContainer.style.display = 'block';
+        progressContainer.innerHTML = `
+          <div class="progress-bar" style="display: block;">
+            <div id="progressFillPrevious" class="progress-fill" style="width: 20%;"></div>
+          </div>
+          <div class="progress-text" id="progressTextPrevious">جاري استرجاع البيانات...</div>
+        `;
+        document.getElementById('keySection').appendChild(progressContainer);
+        
+        const progressFill = document.getElementById('progressFillPrevious');
+        const progressText = document.getElementById('progressTextPrevious');
+        
+        // تحديث نص وشريط التقدم
+        setTimeout(() => {
+          progressFill.style.width = '60%';
+          progressText.textContent = 'جاري تحضير الملفات...';
+        }, 500);
+        
         google.script.run
           .withSuccessHandler(function(result) {
             if (result) {
-              // الانتقال إلى صفحة النتائج مباشرة
-              showSection('result');
+              // تحديث شريط التقدم إلى 100%
+              progressFill.style.width = '100%';
+              progressText.textContent = 'اكتمل بنجاح!';
               
-              // عرض معاينات الملفات
-              displayPdfTabs(result);
-              
-              // عرض رسالة نجاح
-              showToast('تم جلب الملفات السابقة بنجاح', 'success');
+              setTimeout(() => {
+                // إزالة شريط التقدم
+                progressContainer.remove();
+                
+                // الانتقال إلى صفحة النتائج مباشرة
+                showSection('result');
+                
+                // عرض معاينات الملفات
+                displayPdfTabs(result);
+                
+                // عرض رسالة نجاح
+                showToast('تم جلب الملفات السابقة بنجاح', 'success');
+              }, 500);
+            } else {
+              // إزالة شريط التقدم
+              progressContainer.remove();
+              showToast('لم يتم العثور على بيانات سابقة', 'error');
             }
           })
           .withFailureHandler(function(error) {
-            console.error('خطأ في استرجاع الملفات السابقة:', error);
+            // إزالة شريط التقدم
+            progressContainer.remove();
             showToast('تعذر استرجاع الملفات السابقة', 'error');
           })
           .getPreviousResults(currentKey);
@@ -1371,8 +1482,9 @@
         const serialNumberInput = document.getElementById('serialNumber');
         const submitBtn = document.getElementById('submitFormBtn');
         const submitError = document.getElementById('submitError');
-        const progressBar = document.getElementById('progressBarContainer');
+        const progressContainer = document.getElementById('progressBarContainer');
         const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
         
         // الحصول على البيانات
         const name = nameInput.value.trim();
@@ -1428,8 +1540,9 @@
           const reader = new FileReader();
           reader.onload = function(e) {
             // تحديث شريط التقدم
-            progressBar.style.display = 'block';
+            progressContainer.style.display = 'block';
             progressFill.style.width = '30%';
+            progressText.textContent = 'جاري تحميل الصورة...';
             
             // تقسيم البيانات للحصول على الـ base64 فقط
             const base64String = e.target.result.split(',')[1];
@@ -1454,8 +1567,9 @@
         } else {
           // للجان: لا نحتاج إلى صورة أو حقول إضافية
           // عرض شريط التقدم
-          progressBar.style.display = 'block';
+          progressContainer.style.display = 'block';
           progressFill.style.width = '30%';
+          progressText.textContent = 'جاري إرسال البيانات...';
           
           // إرسال البيانات مباشرة
           submitDataToServer(formData, progressFill, progressBar, submitBtn, submitError);
@@ -1466,32 +1580,51 @@
       }
       
       // إرسال البيانات إلى الخادم
-      function submitDataToServer(formData, progressFill, progressBar, submitBtn, submitError) {
+      function submitDataToServer(formData, progressFill, progressContainer, submitBtn, submitError) {
+        // عرض شريط التقدم
+        progressContainer.style.display = 'block';
+        const progressText = document.getElementById('progressText');
+        
+        // تحديث نص التقدم
+        progressText.textContent = 'جاري تحميل البيانات...';
+        progressFill.style.width = '30%';
+        
+        setTimeout(() => {
+          progressFill.style.width = '50%';
+          progressText.textContent = 'جاري معالجة البيانات...';
+        }, 800);
+        
         google.script.run
           .withSuccessHandler(function(result) {
             // تحديث شريط التقدم
-            progressFill.style.width = '100%';
+            progressFill.style.width = '80%';
+            progressText.textContent = 'جاري إنشاء المستندات...';
             
             setTimeout(() => {
-              // إخفاء شريط التقدم
-              progressBar.style.display = 'none';
+              progressFill.style.width = '100%';
+              progressText.textContent = 'اكتملت العملية بنجاح!';
               
-              // عرض رسالة النجاح
-              showToast('تم إنشاء المستندات بنجاح!', 'success');
-              
-              // عرض معاينات الملفات باستخدام تبويبات
-              displayPdfTabs(result);
-              
-              // الانتقال إلى صفحة النتائج
-              showSection('result');
-              
-              // إعادة تمكين الزر
-              submitBtn.disabled = false;
+              setTimeout(() => {
+                // إخفاء شريط التقدم
+                progressContainer.style.display = 'none';
+                
+                // عرض رسالة النجاح
+                showToast('تم إنشاء المستندات بنجاح!', 'success');
+                
+                // عرض معاينات الملفات باستخدام تبويبات
+                displayPdfTabs(result);
+                
+                // الانتقال إلى صفحة النتائج
+                showSection('result');
+                
+                // إعادة تمكين الزر
+                submitBtn.disabled = false;
+              }, 500);
             }, 500);
           })
           .withFailureHandler(function(error) {
             // إخفاء شريط التقدم
-            progressBar.style.display = 'none';
+            progressContainer.style.display = 'none';
             submitBtn.disabled = false;
             
             // عرض رسالة الخطأ
@@ -1502,9 +1635,6 @@
           })
           .withUserObject(this)
           .processFormWithImage(formData);
-          
-        // تحديث شريط التقدم بعد إرسال البيانات
-        progressFill.style.width = '60%';
       }
       
       // عرض معاينات ملفات PDF باستخدام تبويبات
@@ -1516,26 +1646,49 @@
         tabsContainer.innerHTML = '';
         tabContentsContainer.innerHTML = '';
         
-        // تحديد الملفات المتاحة حسب الرتبة
+        // تحديد الملفات المتاحة حسب الرتبة والتحقق من وجودها
         let pdfs = [];
+        let missingPdfs = [];
         
+        // إضافة PDF حسب الرتبة - فقط إذا كانت غير فارغة
         if (currentRank === 'كشاف' || currentRank === 'قائد') {
           if (result.pdf1) {
             pdfs.push({ id: 'pdf1', title: 'الشهادة', url: result.pdf1 });
+          } else {
+            // تسجيل PDF المفقود
+            missingPdfs.push('الشهادة');
           }
           
           if (result.pdf2) {
             pdfs.push({ id: 'pdf2', title: 'البطاقة', url: result.pdf2 });
+          } else {
+            missingPdfs.push('البطاقة');
           }
         }
         
         if (currentRank === 'لجان' || currentRank === 'قائد') {
           if (result.pdf3) {
             pdfs.push({ id: 'pdf3', title: 'الكتيب', url: result.pdf3 });
+          } else {
+            missingPdfs.push('الكتيب');
           }
         }
         
-        // إنشاء التبويبات والمحتوى لكل ملف
+        // التحقق من وجود ملفات متاحة
+        if (pdfs.length === 0) {
+          // إذا لم يكن هناك ملفات متاحة، عرض رسالة
+          tabContentsContainer.innerHTML = `
+            <div class="tab-content active">
+              <div class="pdf-preview">
+                <h3 class="pdf-preview-title" style="color: var(--error);">عذراً، الشهادات غير متوفرة حاليًا</h3>
+                <p style="text-align: center; margin: 2rem 0;">الشهادات ليست جاهزة بعد. يرجى المحاولة لاحقًا.</p>
+              </div>
+            </div>
+          `;
+          return;
+        }
+        
+        // إنشاء التبويبات والمحتوى لكل ملف متاح
         pdfs.forEach((pdf, index) => {
           // إنشاء زر التبويب
           const tabButton = document.createElement('button');
@@ -1570,6 +1723,17 @@
           
           tabContentsContainer.appendChild(tabContent);
         });
+        
+        // عرض رسالة للملفات المفقودة إذا وجدت
+        if (missingPdfs.length > 0 && pdfs.length > 0) {
+          const noticeDiv = document.createElement('div');
+          noticeDiv.className = 'pdf-preview-title';
+          noticeDiv.style.marginTop = '1rem';
+          noticeDiv.style.color = 'var(--accent)';
+          noticeDiv.style.fontSize = '0.9rem';
+          noticeDiv.textContent = `ملاحظة: ${missingPdfs.join(' و ')} ليست جاهزة بعد.`;
+          tabContentsContainer.appendChild(noticeDiv);
+        }
       }
       
       // تبديل التبويبات
