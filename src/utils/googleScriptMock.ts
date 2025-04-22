@@ -22,6 +22,8 @@ const mockGoogleScriptFunctions = {
                 teamNumber: "5",
                 serialNumber: "101",
                 gender: "قائد",
+                timestamp: "2025/04/01",
+                rank: "قائد",
                 date: "2025/04/01"
               },
               {
@@ -33,6 +35,8 @@ const mockGoogleScriptFunctions = {
                 teamNumber: "6",
                 serialNumber: "102",
                 gender: "قائد",
+                timestamp: "2025/03/20",
+                rank: "قائد",
                 date: "2025/03/20"
               }
             ]
@@ -53,6 +57,8 @@ const mockGoogleScriptFunctions = {
                 teamNumber: "7",
                 serialNumber: "103",
                 gender: "",
+                timestamp: "2025/04/05",
+                rank: "كشاف",
                 date: "2025/04/05"
               }
             ]

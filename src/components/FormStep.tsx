@@ -82,8 +82,8 @@ const FormStep: React.FC<FormStepProps> = ({
         <div className="mb-4">
           <FileHistoryCollapsible 
             previousFiles={previousFiles} 
-            isOpen={isCollapsibleOpen} 
-            setIsOpen={setIsCollapsibleOpen}
+            isCollapsibleOpen={isCollapsibleOpen} 
+            setIsCollapsibleOpen={setIsCollapsibleOpen}
             isDarkMode={isDarkMode}
           />
         </div>

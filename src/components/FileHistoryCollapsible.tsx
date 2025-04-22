@@ -36,7 +36,7 @@ const FileHistoryCollapsible: React.FC<FileHistoryCollapsibleProps> = ({
               <div className="flex justify-between items-center mb-2">
                 <span className="font-medium">{file.name}</span>
                 <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {file.date}
+                  {file.date || file.timestamp}
                 </span>
               </div>
               <div className="grid grid-cols-1 gap-2">

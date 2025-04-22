@@ -21,4 +21,5 @@ export interface UserRecord {
   teamNumber?: string;
   serialNumber?: string;
   gender?: string;
+  date?: string; // Adding the date property
 }
