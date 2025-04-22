@@ -7,7 +7,6 @@ const PDF_TEMPLATE_ID_2 = '1czCXdBsOdEHV9LEaD2UlhF82nvlskfMiv5dGcjnPk0o'; // ق�
 const PDF_TEMPLATE_ID_3 = '10qMk8dalG72juvwHk_4LmdQXAkz8fSHXLW3bshLL2Uo'; // قالب PDF الثالث (للجان)
 const DELETE_TIME = 1440; // وقت الحذف بالدقائق - سيتم حذف الملفات بعد هذه المدة
 const TEMP_FOLDER_NAME = 'temp_registration_files'; // اسم المجلد المؤقت
-const APP_VERSION = '1.2.0'; // إصدار التطبيق - يساعد في تتبع التحديثات
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index')
@@ -606,4 +605,3 @@ function setupTrigger() {
 function onOpen() {
   cleanupOldFiles();
 }
-
