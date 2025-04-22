@@ -85,23 +85,39 @@ function validateKey(key) {
     // تنسيق المفتاح
     key = (key || '').toString().trim();
     
+    // تسجيل بيانات التنفيذ للتصحيح
+    Logger.log('Validating key: ' + key);
+    
     // الوصول إلى صفحة المفاتيح
     const sheet = getSpreadsheet().getSheetByName('المفاتيح');
     if (!sheet) {
+      Logger.log('لم يتم العثور على صفحة المفاتيح');
       throw new Error('لا يمكن العثور على صفحة المفاتيح');
     }
 
+    const lastRow = sheet.getLastRow();
+    Logger.log('Last row in sheet: ' + lastRow);
+    
+    if (lastRow === 0) {
+      Logger.log('الصفحة فارغة');
+      throw new Error('صفحة المفاتيح فارغة');
+    }
+
     // الحصول على كافة البيانات المطلوبة
-    const keyRange = sheet.getRange(1, 1, sheet.getLastRow(), 1);
-    const rankRange = sheet.getRange(1, 2, sheet.getLastRow(), 1);
-    const usedRange = sheet.getRange(1, 3, sheet.getLastRow(), 1);
+    const keyRange = sheet.getRange(1, 1, lastRow, 1);
+    const rankRange = sheet.getRange(1, 2, lastRow, 1);
+    const usedRange = sheet.getRange(1, 3, lastRow, 1);
     
     const keys = keyRange.getValues().flat().map(k => k.toString().trim());
     const ranks = rankRange.getValues().flat().map(r => r.toString().trim());
     const used = usedRange.getValues().flat().map(u => u.toString().trim());
     
+    Logger.log('Available keys: ' + JSON.stringify(keys));
+    
     // البحث عن المفتاح
     const index = keys.indexOf(key);
+    Logger.log('Key index: ' + index);
+    
     if (index === -1) {
       // إذا لم يتم العثور على المفتاح، زيادة عداد المحاولات الخاطئة
       const attempts = parseInt(cache.get(ip) || '0') + 1;
