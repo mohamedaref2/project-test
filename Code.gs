@@ -310,3 +310,4 @@ function setupTrigger() {
   
   return "تم إعداد عملية التنظيف التلقائي بنجاح";
 }
+

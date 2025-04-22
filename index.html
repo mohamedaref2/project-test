@@ -117,6 +117,14 @@
       animation: cardEntrance 1s ease-out forwards;
     }
 
+    .header-image {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 1.5rem;
+      border-radius: 15px 15px 0 0;
+    }
+
     @keyframes cardEntrance {
       from {
         opacity: 0;
@@ -182,6 +190,14 @@
 
     h2 {
       font-size: 1.8rem;
+    }
+
+    .rank-label {
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+      font-weight: 600;
     }
 
     .input-wrapper {
@@ -461,6 +477,157 @@
       60% { transform: translateY(-10px); }
     }
 
+    .radio-group {
+      display: flex;
+      justify-content: space-evenly;
+      margin: 1rem 0;
+    }
+
+    .radio-option {
+      position: relative;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .radio-option input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .radio-custom {
+      position: relative;
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-left: 0.5rem;
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+    }
+
+    .radio-option:hover .radio-custom {
+      border-color: var(--secondary);
+    }
+
+    .radio-option input:checked ~ .radio-custom:after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .pdf-preview-container {
+      margin: 1.5rem 0;
+    }
+
+    .pdf-preview {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      border-radius: 12px;
+      background: var(--input-bg);
+      box-shadow: var(--card-shadow);
+    }
+
+    .pdf-preview-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--primary);
+    }
+
+    .pdf-preview-frame {
+      width: 100%;
+      height: 200px;
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .pdf-preview-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      color: white;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .pdf-preview-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .pdf-preview-icon {
+      margin-right: 0.5rem;
+    }
+
+    .history-section {
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--input-border);
+    }
+
+    .history-title {
+      text-align: center;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--primary);
+    }
+
+    .history-item {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      border-radius: 12px;
+      background: var(--input-bg);
+      box-shadow: var(--card-shadow);
+    }
+
+    .history-date {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--accent);
+      text-align: center;
+    }
+
+    .history-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .history-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem;
+      border-radius: 8px;
+      background: var(--backdrop);
+      color: var(--text);
+      font-weight: 600;
+      border: 1px solid var(--input-border);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .history-button:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
     .download-buttons {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -507,6 +674,14 @@
       }
       
       .download-buttons {
+        grid-template-columns: 1fr;
+      }
+
+      .pdf-preview-frame {
+        height: 150px;
+      }
+
+      .history-buttons {
         grid-template-columns: 1fr;
       }
     }
@@ -560,6 +735,9 @@
   </button>
   
   <div class="card">
+    <!-- Header Image -->
+    <img src="https://i.ibb.co/sJXfcDHM/3a4c72ac-fd79-4a6f-86d8-96031eec8209.jpg" alt="شعار المنظمة" class="header-image">
+    
     <!-- قسم المفتاح -->
     <div id="keySection" class="section visible">
       <h1>مرحبًا بك في نظام التسجيل</h1>
@@ -584,6 +762,8 @@
     <!-- قسم النموذج -->
     <div id="formSection" class="section hidden">
       <h2>استمارة التسجيل</h2>
+      <div id="rankLabel" class="rank-label"></div>
+      
       <div class="input-wrapper">
         <input type="text" class="form-input" id="fullName" placeholder="الاسم الكامل">
         <span class="input-icon">
@@ -592,6 +772,20 @@
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
         </span>
+      </div>
+      
+      <!-- اختيار النوع للقادة -->
+      <div id="leaderTypeSection" class="radio-group" style="display: none;">
+        <label class="radio-option">
+          <input type="radio" name="leaderType" value="القائد الكشفي" checked>
+          <span class="radio-custom"></span>
+          القائد الكشفي
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="leaderType" value="القائدة الكشفية">
+          <span class="radio-custom"></span>
+          القائدة الكشفية
+        </label>
       </div>
       
       <div class="file-input-wrapper">
@@ -619,6 +813,12 @@
       <button id="submitFormBtn" class="button success">
         إرسال البيانات
       </button>
+
+      <!-- سجل الملفات السابقة للقادة -->
+      <div id="fileHistorySection" class="history-section" style="display: none;">
+        <h3 class="history-title">سجل الملفات السابقة</h3>
+        <div id="historyItems"></div>
+      </div>
     </div>
 
     <!-- قسم النتائج -->
@@ -630,11 +830,10 @@
         </svg>
       </div>
       <h2>تمت العملية بنجاح! 🎉</h2>
-      <p>تم إنشاء المستندات الخاصة بك، يمكنك تحميلها الآن</p>
+      <p>تم إنشاء المستندات الخاصة بك، يمكنك معاينتها وتحميلها الآن</p>
       
-      <div id="downloadButtons" class="download-buttons">
-        <!-- سيتم ملؤها ديناميكيا -->
-      </div>
+      <!-- معاينة ملفات PDF -->
+      <div id="pdfPreviewsContainer" class="pdf-preview-container"></div>
       
       <button id="newRegistrationBtn" class="button" style="margin-top: 2rem;">
         تسجيل جديد
@@ -651,6 +850,11 @@
   <script>
     // ========== إعداد الواجهة ==========
     document.addEventListener('DOMContentLoaded', function() {
+      // متغيرات عامة للتخزين المؤقت
+      let currentKey = '';
+      let currentRank = '';
+      let currentUsed = '';
+
       // إعداد الجزيئات
       particlesJS('particles-js', {
         particles: {
@@ -841,6 +1045,7 @@
         
         // تنظيف المدخلات
         const key = keyInput.value.trim();
+        currentKey = key; // تخزين المفتاح للاستخدام اللاحق
         errMsg.style.display = 'none';
         
         if (!key) {
@@ -856,13 +1061,31 @@
         loader.style.display = 'block';
         
         google.script.run
-          .withSuccessHandler(function(isValid) {
+          .withSuccessHandler(function(response) {
             loader.style.display = 'none';
             validateBtn.disabled = false;
             
-            if (isValid) {
+            // في حالة نجاح التحقق
+            if (response.isValid) {
+              // تخزين معلومات المفتاح
+              currentRank = response.rank;
+              currentUsed = response.used;
+              
+              // تهيئة صفحة النموذج بناءً على الرتبة
+              setupFormBasedOnRank(response.rank, response.used);
+              
+              // التحقق من وجود ملفات سابقة للقادة
+              if (response.rank === 'قائد') {
+                loadPreviousFiles(key);
+              }
+              
               // الانتقال إلى صفحة النموذج
               showSection('form');
+              
+              // إذا كان المفتاح مستخدم، نعرض الملفات مباشرة
+              if (response.used === "1" && response.rank !== 'قائد') {
+                showPreviousResults(key);
+              }
             } else {
               errMsg.textContent = 'المفتاح غير صحيح، الرجاء المحاولة مرة أخرى';
               errMsg.style.display = 'block';
@@ -884,6 +1107,131 @@
           .validateKey(key);
       }
       
+      // إعداد صفحة النموذج بناءً على الرتبة
+      function setupFormBasedOnRank(rank, used) {
+        const rankLabel = document.getElementById('rankLabel');
+        const leaderTypeSection = document.getElementById('leaderTypeSection');
+        
+        // تعيين عنوان الرتبة
+        switch (rank) {
+          case 'قائد':
+            rankLabel.textContent = 'القائد الكشفي - القائدة الكشفية';
+            leaderTypeSection.style.display = 'flex';
+            break;
+          case 'لجان':
+            rankLabel.textContent = 'لجان التميز التنفيذي';
+            leaderTypeSection.style.display = 'none';
+            break;
+          case 'كشاف':
+            rankLabel.textContent = 'الكشاف - فتاة الكشافة';
+            leaderTypeSection.style.display = 'none';
+            break;
+          default:
+            rankLabel.textContent = '';
+            leaderTypeSection.style.display = 'none';
+        }
+      }
+      
+      // تحميل الملفات السابقة للقادة
+      function loadPreviousFiles(key) {
+        const historySection = document.getElementById('fileHistorySection');
+        const historyItems = document.getElementById('historyItems');
+        
+        google.script.run
+          .withSuccessHandler(function(history) {
+            if (history && history.length > 0) {
+              historySection.style.display = 'block';
+              historyItems.innerHTML = ''; // مسح المحتوى السابق
+              
+              // تجميع الملفات حسب التاريخ
+              const filesByDate = {};
+              history.forEach(file => {
+                const date = new Date(file.date).toLocaleDateString('ar-SA');
+                if (!filesByDate[date]) {
+                  filesByDate[date] = [];
+                }
+                filesByDate[date].push(file);
+              });
+              
+              // إنشاء عناصر التاريخ
+              for (const date in filesByDate) {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                const dateHeader = document.createElement('div');
+                dateHeader.className = 'history-date';
+                dateHeader.textContent = date;
+                historyItem.appendChild(dateHeader);
+                
+                const buttonsContainer = document.createElement('div');
+                buttonsContainer.className = 'history-buttons';
+                
+                // إضافة أزرار التحميل لكل ملف
+                filesByDate[date].forEach((file, index) => {
+                  if (file.pdf1) {
+                    const button = document.createElement('a');
+                    button.className = 'history-button';
+                    button.href = file.pdf1;
+                    button.target = '_blank';
+                    button.textContent = `الشهادة ${index + 1}`;
+                    buttonsContainer.appendChild(button);
+                  }
+                  
+                  if (file.pdf2) {
+                    const button = document.createElement('a');
+                    button.className = 'history-button';
+                    button.href = file.pdf2;
+                    button.target = '_blank';
+                    button.textContent = `البطاقة ${index + 1}`;
+                    buttonsContainer.appendChild(button);
+                  }
+                  
+                  if (file.pdf3) {
+                    const button = document.createElement('a');
+                    button.className = 'history-button';
+                    button.href = file.pdf3;
+                    button.target = '_blank';
+                    button.textContent = `الكتيب ${index + 1}`;
+                    buttonsContainer.appendChild(button);
+                  }
+                });
+                
+                historyItem.appendChild(buttonsContainer);
+                historyItems.appendChild(historyItem);
+              }
+            } else {
+              historySection.style.display = 'none';
+            }
+          })
+          .withFailureHandler(function(error) {
+            console.error('خطأ في تحميل الملفات السابقة:', error);
+            historySection.style.display = 'none';
+          })
+          .getPreviousFiles(key);
+      }
+      
+      // عرض النتائج السابقة للمفتاح المستخدم
+      function showPreviousResults(key) {
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (result) {
+              // الانتقال إلى صفحة النتائج مباشرة
+              showSection('result');
+              
+              // عرض معاينات الملفات
+              displayPdfPreviews(result);
+              
+              // عرض رسالة نجاح
+              showToast('تم جلب الملفات السابقة بنجاح', 'success');
+            }
+          })
+          .withFailureHandler(function(error) {
+            console.error('خطأ في استرجاع الملفات السابقة:', error);
+            showToast('تعذر استرجاع الملفات السابقة', 'error');
+          })
+          .getPreviousResults(key);
+      }
+      
       // دالة إرسال النموذج
       function submitForm() {
         const nameInput = document.getElementById('fullName');
@@ -892,6 +1240,18 @@
         const submitError = document.getElementById('submitError');
         const progressBar = document.getElementById('progressBarContainer');
         const progressFill = document.getElementById('progressFill');
+        
+        // الحصول على نوع القائد إذا كانت الرتبة قائد
+        let leaderType = '';
+        if (currentRank === 'قائد') {
+          const leaderTypeRadios = document.getElementsByName('leaderType');
+          for (const radio of leaderTypeRadios) {
+            if (radio.checked) {
+              leaderType = radio.value;
+              break;
+            }
+          }
+        }
         
         // التحقق من المدخلات
         const name = nameInput.value.trim();
@@ -952,35 +1312,11 @@
                 // إخفاء شريط التقدم
                 progressBar.style.display = 'none';
                 
-                // عرض رسالة النجاح وتحميل الملفات
+                // عرض رسالة النجاح
                 showToast('تم إنشاء المستندات بنجاح!', 'success');
                 
-                // إنشاء أزرار تحميل الملفات
-                const downloadButtons = document.getElementById('downloadButtons');
-                downloadButtons.innerHTML = `
-                  <a href="${result.pdf1}" target="_blank" class="download-button">
-                    <span class="download-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                      </svg>
-                    </span>
-                    <span>تحميل الشهادة</span>
-                  </a>
-                  <a href="${result.pdf2}" target="_blank" class="download-button">
-                    <span class="download-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                        <polyline points="21 15 16 10 5 21"></polyline>
-                      </svg>
-                    </span>
-                    <span>تحميل البطاقة</span>
-                  </a>
-                `;
+                // عرض معاينات الملفات
+                displayPdfPreviews(result);
                 
                 // الانتقال إلى صفحة النتائج
                 showSection('result');
@@ -1004,13 +1340,69 @@
               showToast(error.message || 'حدث خطأ أثناء معالجة البيانات.', 'error');
             })
             .withUserObject(this)
-            .processFormWithImage(name, base64String, file.type);
+            .processFormWithImage(name, base64String, file.type, currentKey, leaderType);
             
           // تحديث شريط التقدم بعد إرسال البيانات
           progressFill.style.width = '60%';
         };
         
         reader.readAsDataURL(file);
+      }
+      
+      // عرض معاينات ملفات PDF
+      function displayPdfPreviews(result) {
+        const previewsContainer = document.getElementById('pdfPreviewsContainer');
+        previewsContainer.innerHTML = '';
+        
+        // إنشاء معاينة لكل ملف PDF بناءً على الرتبة
+        if (currentRank === 'كشاف' || currentRank === 'قائد') {
+          if (result.pdf1) {
+            createPdfPreview('الشهادة', result.pdf1, previewsContainer);
+          }
+          
+          if (result.pdf2) {
+            createPdfPreview('البطاقة', result.pdf2, previewsContainer);
+          }
+        }
+        
+        if (currentRank === 'لجان' || currentRank === 'قائد') {
+          if (result.pdf3) {
+            createPdfPreview('الكتيب', result.pdf3, previewsContainer);
+          }
+        }
+      }
+      
+      // إنشاء عنصر معاينة PDF
+      function createPdfPreview(title, url, container) {
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'pdf-preview';
+        
+        const titleEl = document.createElement('div');
+        titleEl.className = 'pdf-preview-title';
+        titleEl.textContent = title;
+        previewDiv.appendChild(titleEl);
+        
+        const frame = document.createElement('iframe');
+        frame.className = 'pdf-preview-frame';
+        frame.src = url;
+        frame.title = title;
+        previewDiv.appendChild(frame);
+        
+        const button = document.createElement('a');
+        button.className = 'pdf-preview-button';
+        button.href = url;
+        button.target = '_blank';
+        button.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pdf-preview-icon">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          تحميل ${title}
+        `;
+        previewDiv.appendChild(button);
+        
+        container.appendChild(previewDiv);
       }
       
       // دالة عرض رسالة توست
@@ -1045,7 +1437,7 @@
         // عرض التوست
         toast.style.display = 'flex';
         
-        // إخفاء التوست بعد 10 ثواني
+        // إخفاء التوست بعد 5 ثواني
         setTimeout(() => {
           toast.style.opacity = '0';
           toast.style.transition = 'opacity 0.5s';
@@ -1060,3 +1452,4 @@
   </script>
 </body>
 </html>
+
