@@ -1,11 +1,11 @@
 
-const FAILED_ATTEMPTS_LIMIT = 5; // عدد المحالولات الخاطئه
-const LOCKOUT_DURATION = 5 * 60 * 1000; //  مدة الحظر بسبب الاسبام
-const SPREADSHEET_ID = '1xJfs2f8roHCLJuNNJCuOsuoFOr9G0v6xN1paoL3cjZ8'; // قم بوضع معرّف جدول البيانات الخاص بك هنا
-const PDF_TEMPLATE_ID_1 = '1gukbJwN35ziQyb5OnsNeWJvP4ZLU_4X8LBAGIVTz3kE';
-const PDF_TEMPLATE_ID_2 = '1czCXdBsOdEHV9LEaD2UlhF82nvlskfMiv5dGcjnPk0o';
-const PDF_TEMPLATE_ID_3 = '10qMk8dalG72juvwHk_4LmdQXAkz8fSHXLW3bshLL2Uo'
-const DELETE_TIME = 1440; // بالدقائق - سيتم حذف الملفات بعد هذه المدة
+const FAILED_ATTEMPTS_LIMIT = 5; // عدد المحاولات الخاطئة
+const LOCKOUT_DURATION = 5 * 60 * 1000; // مدة الحظر بسبب الإسبام (5 دقائق)
+const SPREADSHEET_ID = '1xJfs2f8roHCLJuNNJCuOsuoFOr9G0v6xN1paoL3cjZ8'; // معرّف جدول البيانات
+const PDF_TEMPLATE_ID_1 = '1gukbJwN35ziQyb5OnsNeWJvP4ZLU_4X8LBAGIVTz3kE'; // قالب PDF الأول (للكشاف)
+const PDF_TEMPLATE_ID_2 = '1czCXdBsOdEHV9LEaD2UlhF82nvlskfMiv5dGcjnPk0o'; // قالب PDF الثاني (للكشاف)
+const PDF_TEMPLATE_ID_3 = '10qMk8dalG72juvwHk_4LmdQXAkz8fSHXLW3bshLL2Uo'; // قالب PDF الثالث (للجان)
+const DELETE_TIME = 1440; // وقت الحذف بالدقائق - سيتم حذف الملفات بعد هذه المدة
 const TEMP_FOLDER_NAME = 'temp_registration_files'; // اسم المجلد المؤقت
 
 function doGet() {
@@ -77,45 +77,104 @@ function validateKey(key) {
     const cache = CacheService.getScriptCache();
     const ip = Session.getActiveUser().getEmail() || 'anonymous';
 
+    // التحقق من تجاوز عدد المحاولات
     if (parseInt(cache.get(ip) || '0') >= FAILED_ATTEMPTS_LIMIT) {
-      throw 'تم تجاوز عدد المحاولات، الرجاء الانتظار 5 دقائق';
+      throw new Error('تم تجاوز عدد المحاولات، الرجاء الانتظار 5 دقائق');
     }
 
+    // تنسيق المفتاح
     key = (key || '').toString().trim();
-    rank = (rank || '').toString().trim();
-    used = (used || '').toString().trim();
+    
+    // الوصول إلى صفحة المفاتيح
     const sheet = getSpreadsheet().getSheetByName('المفاتيح');
-    const keys = sheet.getRange(1, 1, sheet.getLastRow(), 1)
-      .getValues()
-      .flat()
-      .map(k => k.toString().trim());
-    const rank = sheet.getRange(1, 2, sheet.getLastRow(), 1)
-      .getValues()
-      .flat()
-      .map(k => k.toString().trim());
-    const used = sheet.getRange(1, 3, sheet.getLastRow(), 1)
-      .getValues()
-      .flat()
-      .map(k => k.toString().trim());
-  
-    const isValid = keys.includes(key);
-
-    if (!isValid) {
-      const attempts = parseInt(cache.get(ip) || '0') + 1;
-      cache.put(ip, attempts.toString(), 5 * 60); // LOCKOUT_DURATION/1000
-      throw 'المفتاح غير صحيح';
+    if (!sheet) {
+      throw new Error('لا يمكن العثور على صفحة المفاتيح');
     }
 
-    return true;
+    // الحصول على كافة البيانات المطلوبة
+    const keyRange = sheet.getRange(1, 1, sheet.getLastRow(), 1);
+    const rankRange = sheet.getRange(1, 2, sheet.getLastRow(), 1);
+    const usedRange = sheet.getRange(1, 3, sheet.getLastRow(), 1);
+    
+    const keys = keyRange.getValues().flat().map(k => k.toString().trim());
+    const ranks = rankRange.getValues().flat().map(r => r.toString().trim());
+    const used = usedRange.getValues().flat().map(u => u.toString().trim());
+    
+    // البحث عن المفتاح
+    const index = keys.indexOf(key);
+    if (index === -1) {
+      // إذا لم يتم العثور على المفتاح، زيادة عداد المحاولات الخاطئة
+      const attempts = parseInt(cache.get(ip) || '0') + 1;
+      cache.put(ip, attempts.toString(), 5 * 60); // تخزين لمدة 5 دقائق
+      throw new Error('المفتاح غير صحيح');
+    }
+
+    // تحقق مما إذا كان المفتاح قد تم استخدامه
+    const isUsed = used[index] === '1';
+    
+    // الحصول على الرتبة
+    const rank = ranks[index];
+
+    // البحث عن السجلات السابقة للمستخدم (فقط إذا كان قائد)
+    let previousFiles = [];
+    if (isUsed || rank === 'قائد') {
+      previousFiles = getPreviousFiles(key);
+    }
+
+    return {
+      key: key,
+      rank: rank,
+      isUsed: isUsed,
+      index: index + 1,  // +1 لأن الصفوف في Sheets تبدأ من 1
+      previousFiles: previousFiles
+    };
 
   } catch (error) {
-    console.error('validateKey error:', error);
+    Logger.log('validateKey error: ' + error.message);
     throw error;
   }
 }
 
+// ========== الحصول على الملفات السابقة للمستخدم ==========
+function getPreviousFiles(key) {
+  try {
+    // الوصول إلى صفحة السجلات
+    const logSheet = getSpreadsheet().getSheetByName('السجلات');
+    if (!logSheet) {
+      return [];
+    }
+
+    // البحث عن جميع السجلات التي تحتوي على المفتاح المحدد
+    const records = logSheet.getDataRange().getValues();
+    
+    // تصفية السجلات حسب المفتاح
+    const results = records.filter(row => row[1] === key)
+      .map(row => {
+        // التحقق من وجود الروابط
+        const pdf1Url = row[2] || null;
+        const pdf2Url = row[3] || null;
+        const pdf3Url = row[4] || null;
+        const date = row[5] instanceof Date ? row[5] : new Date();
+        
+        return {
+          name: row[0],
+          key: row[1],
+          pdf1: pdf1Url,
+          pdf2: pdf2Url,
+          pdf3: pdf3Url,
+          date: date.toLocaleDateString('ar-SA')
+        };
+      });
+    
+    return results.reverse(); // إرجاع الأحدث أولاً
+  } catch (e) {
+    Logger.log('خطأ في جلب الملفات السابقة: ' + e.message);
+    return [];
+  }
+}
+
 // ========== معالجة النموذج مع الصورة ==========
-function processFormWithImage(name, base64Image, mimeType) {
+function processFormWithImage(data) {
   let imageId = null;
   let tempDocIds = [];
   
@@ -123,40 +182,65 @@ function processFormWithImage(name, base64Image, mimeType) {
     // تنظيف الملفات القديمة قبل إنشاء ملفات جديدة
     cleanupOldFiles();
     
+    // استخراج البيانات
+    const { name, base64Image, mimeType, key, rank, gender } = data;
+    
     // التحقق من الاسم
     if (!name || name.length > 100) {
-      throw 'الاسم غير صحيح أو طويل جداً';
+      throw new Error('الاسم غير صحيح أو طويل جداً');
     }
     
     // حفظ الصورة في Google Drive
     imageId = saveImage(base64Image, mimeType);
     
     if (!imageId) {
-      throw 'فشل في حفظ الصورة';
+      throw new Error('فشل في حفظ الصورة');
     }
-
-    // إنشاء ملفات PDF
-    const pdf1Result = createPdfFromTemplate(PDF_TEMPLATE_ID_1, name);
-    const pdf2Result = createPdfWithImageFromTemplate(PDF_TEMPLATE_ID_2, name, imageId);
     
-    // إضافة معرفات المستندات المؤقتة للتنظيف لاحقًا
-    tempDocIds = [...pdf1Result.tempIds, ...pdf2Result.tempIds];
+    // تحديد أي ملفات PDF سيتم إنشاؤها استنادًا إلى الرتبة
+    let pdf1Url = null;
+    let pdf2Url = null;
+    let pdf3Url = null;
+    
+    // إنشاء ملفات PDF حسب الرتبة
+    if (rank === 'كشاف' || rank === 'قائد') {
+      const pdf1Result = createPdfFromTemplate(PDF_TEMPLATE_ID_1, name, gender);
+      pdf1Url = pdf1Result.pdf.getUrl();
+      tempDocIds = [...tempDocIds, ...pdf1Result.tempIds];
+      
+      const pdf2Result = createPdfWithImageFromTemplate(PDF_TEMPLATE_ID_2, name, imageId, gender);
+      pdf2Url = pdf2Result.pdf.getUrl();
+      tempDocIds = [...tempDocIds, ...pdf2Result.tempIds];
+    }
+    
+    if (rank === 'لجان' || rank === 'قائد') {
+      const pdf3Result = createPdfFromTemplate(PDF_TEMPLATE_ID_3, name, gender);
+      pdf3Url = pdf3Result.pdf.getUrl();
+      tempDocIds = [...tempDocIds, ...pdf3Result.tempIds];
+    }
     
     // تسجيل البيانات في جدول البيانات
     const logSheet = getSpreadsheet().getSheetByName('السجلات');
-    //pdf_url = null اذا كان غير موجود
-    logSheet.appendRow([name, key, pdf1_url, pdf2_url, pdf3_url, new Date()]);
+    logSheet.appendRow([name, key, pdf1Url, pdf2Url, pdf3Url, new Date()]);
+    
+    // تحديث حالة الاستخدام للمفتاح (إذا لم يكن قائد)
+    if (rank !== 'قائد') {
+      const keySheet = getSpreadsheet().getSheetByName('المفاتيح');
+      const keyData = validateKey(key);
+      keySheet.getRange(keyData.index, 3).setValue('1'); // تحديث حالة الاستخدام
+    }
     
     return { 
-      pdf1: pdf1Result.pdf.getUrl(), 
-      pdf2: pdf2Result.pdf.getUrl() 
+      pdf1: pdf1Url, 
+      pdf2: pdf2Url,
+      pdf3: pdf3Url
     };
     
   } catch (e) {
     Logger.log('خطأ في معالجة النموذج: ' + e.message);
     throw new Error('فشل معالجة النموذج: ' + e.message);
   } finally {
-    // حذف ملف الصورة المؤقت
+    // حذف ملف الصورة المؤقت (إذا كان لا يزال موجودًا)
     if (imageId) {
       try {
         DriveApp.getFileById(imageId).setTrashed(true);
@@ -190,7 +274,7 @@ function saveImage(base64String, mimeType) {
 }
 
 // ========== دوال إنشاء PDF ==========
-function createPdfFromTemplate(templateId, name) {
+function createPdfFromTemplate(templateId, name, gender) {
   const tempIds = [];
   try {
     // إنشاء نسخة مؤقتة من النموذج
@@ -202,25 +286,27 @@ function createPdfFromTemplate(templateId, name) {
     const doc = DocumentApp.openById(tempFile.getId());
     const body = doc.getBody();
     
-    if (!body.findText('{الاسم}')) {
-      throw 'لم يتم العثور على مكان الاسم في القالب';
+    // استبدال الاسم والجنس إذا وجد
+    body.replaceText('{الاسم}', name);
+    if (gender) {
+      body.replaceText('{الجنس}', gender);
     }
     
-    body.replaceText('{الاسم}', name);
     doc.saveAndClose();
     
     // تحويل المستند المؤقت إلى PDF
     const pdfBlob = tempFile.getAs('application/pdf');
     const pdfFile = tempFolder.createFile(pdfBlob.setName(`Certificate_${name}_${Date.now()}.pdf`));
     pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); 
+    
     return { pdf: pdfFile, tempIds: tempIds };
   } catch (e) {
-    Logger.log('خطأ في إنشاء PDF الأول: ' + e.message);
-    throw new Error('فشل إنشاء الشهادة: ' + e.message);
+    Logger.log('خطأ في إنشاء PDF: ' + e.message);
+    throw new Error('فشل إنشاء المستند: ' + e.message);
   }
 }
 
-function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
+function createPdfWithImageFromTemplate(templateId, name, imageUrl, gender) {
   const tempIds = [];
   try {
     // إنشاء نسخة مؤقتة من النموذج
@@ -232,14 +318,17 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
     const doc = DocumentApp.openById(tempFile.getId());
     const body = doc.getBody();
     
-    // استبدال الاسم
+    // استبدال الاسم والجنس إذا وجد
     body.replaceText('{الاسم}', name);
+    if (gender) {
+      body.replaceText('{الجنس}', gender);
+    }
 
     // البحث عن مكان الصورة
     const imagePlaceholder = body.findText('{الصورة}');
     
     if (!imagePlaceholder) {
-      throw 'لم يتم العثور على مكان الصورة في القالب';
+      throw new Error('لم يتم العثور على مكان الصورة في القالب');
     }
 
     const element = imagePlaceholder.getElement();
@@ -248,7 +337,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
 
     // التحقق من الفهرس
     if (index < 0 || index >= parent.getNumChildren()) {
-      throw 'موضع الصورة غير صحيح في القالب';
+      throw new Error('موضع الصورة غير صحيح في القالب');
     }
 
     // إزالة العنصر النائب
@@ -260,7 +349,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
 
     // التحقق من صحة الصورة
     if (!blob || blob.getBytes().length === 0) {
-      throw 'ملف الصورة غير صالح أو فارغ';
+      throw new Error('ملف الصورة غير صالح أو فارغ');
     }
 
     // إدراج الصورة مع التحكم في الحجم
@@ -271,7 +360,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
     const originalHeight = image.getHeight();
     
     if (originalWidth === 0 || originalHeight === 0) {
-      throw 'أبعاد الصورة غير صالحة';
+      throw new Error('أبعاد الصورة غير صالحة');
     }
     
     const aspectRatio = originalWidth / originalHeight;
@@ -287,7 +376,7 @@ function createPdfWithImageFromTemplate(templateId, name, imageUrl) {
     
     return { pdf: pdfFile, tempIds: tempIds };
   } catch (e) {
-    Logger.log('خطأ في إنشاء PDF الثاني: ' + e.message);
+    Logger.log('خطأ في إنشاء PDF مع صورة: ' + e.message);
     throw new Error('فشل إنشاء البطاقة: ' + e.message);
   }
 }
@@ -311,3 +400,7 @@ function setupTrigger() {
   return "تم إعداد عملية التنظيف التلقائي بنجاح";
 }
 
+// ========== تشغيل عملية التنظيف عند تشغيل النموذج ==========
+function onOpen() {
+  cleanupOldFiles();
+}
