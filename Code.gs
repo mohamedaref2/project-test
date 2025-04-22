@@ -1,3 +1,4 @@
+
 const FAILED_ATTEMPTS_LIMIT = 5; // عدد المحاولات الخاطئة
 const LOCKOUT_DURATION = 5 * 60 * 1000; // مدة الحظر بسبب الإسبام (5 دقائق)
 const SPREADSHEET_ID = '1xJfs2f8roHCLJuNNJCuOsuoFOr9G0v6xN1paoL3cjZ8'; // معرّف جدول البيانات
@@ -202,26 +203,6 @@ function getPreviousFiles(key) {
   } catch (e) {
     Logger.log('خطأ في جلب الملفات السابقة: ' + e.message);
     return [];
-  }
-}
-
-// ========== حفظ الصورة ==========
-function saveImage(base64Image, mimeType) {
-  try {
-    // لو السطر يحتوي على "data:image" بنشيل الجزء التعريفي
-    const base64Data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
-
-    // تحويل إلى Blob
-    const decoded = Utilities.base64Decode(base64Data);
-    const blob = Utilities.newBlob(decoded, mimeType, 'photo.' + mimeType.split('/')[1]);
-
-    // رفع الصورة لجوجل درايف
-    const file = DriveApp.createFile(blob);
-    return file.getId();
-
-  } catch (e) {
-    Logger.log('خطأ في حفظ الصورة: ' + e.message);
-    throw('فشل حفظ الصورة');
   }
 }
 
@@ -437,6 +418,26 @@ function getPreviousResults(key) {
   } catch (e) {
     Logger.log('خطأ في استرجاع النتائج السابقة: ' + e.message);
     return null;
+  }
+}
+
+// ========== حفظ الصورة ==========
+function saveImage(base64Image, mimeType) {
+  try {
+    // لو السطر يحتوي على "data:image" بنشيل الجزء التعريفي
+    const base64Data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
+
+    // تحويل إلى Blob
+    const decoded = Utilities.base64Decode(base64Data);
+    const blob = Utilities.newBlob(decoded, mimeType, 'photo.' + mimeType.split('/')[1]);
+
+    // رفع الصورة لجوجل درايف
+    const file = DriveApp.createFile(blob);
+    return file.getId();
+
+  } catch (e) {
+    Logger.log('خطأ في حفظ الصورة: ' + e.message);
+    throw('فشل حفظ الصورة');
   }
 }
 
