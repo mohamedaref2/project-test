@@ -409,7 +409,7 @@
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       animation: slideUp 0.3s ease forwards;
       z-index: 999;
-      display: flex !important;
+      display: flex;
       align-items: center;
       justify-content: center;
       min-width: 250px;
@@ -1087,6 +1087,7 @@
                 showPreviousResults(key);
               }
             } else {
+              console.log('validateKey →', response);
               errMsg.textContent = 'المفتاح غير صحيح، الرجاء المحاولة مرة أخرى';
               errMsg.style.display = 'block';
               keyInput.disabled = false;
@@ -1301,7 +1302,7 @@
           
           // تحديث شريط التقدم
           progressFill.style.width = '30%';
-          
+
           // إرسال البيانات إلى الخادم
           google.script.run
             .withSuccessHandler(function(result) {
@@ -1340,7 +1341,14 @@
               showToast(error.message || 'حدث خطأ أثناء معالجة البيانات.', 'error');
             })
             .withUserObject(this)
-            .processFormWithImage(name, base64String, file.type, currentKey, leaderType);
+            .processFormWithImage({
+              name: name,
+              base64Image: base64String,
+              mimeType: file.type,
+              key: currentKey,
+              rank: currentRank,
+              gender: leaderType
+            });
             
           // تحديث شريط التقدم بعد إرسال البيانات
           progressFill.style.width = '60%';
@@ -1437,19 +1445,18 @@
         // عرض التوست
         toast.style.display = 'flex';
         
-        // إخفاء التوست بعد 5 ثواني
+        // إخفاء التوست بعد 3 ثواني
         setTimeout(() => {
           toast.style.opacity = '0';
-          toast.style.transition = 'opacity 0.5s';
+          toast.style.transition = 'opacity 0.3s';
           setTimeout(() => {
             toast.style.display = 'none';
             toast.style.opacity = '1';
             toast.style.transition = '';
-          }, 500);
-        }, 5000);
+          }, 300);
+        }, 3000);
       }
     });
   </script>
 </body>
 </html>
-
