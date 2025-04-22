@@ -14,10 +14,10 @@ function getSheet() {
 // Initialize the sheet with headers if needed
 function initializeSheet() {
   const sheet = getSheet();
-  const headers = sheet.getRange(1, 1, 1, 10).getValues()[0];
+  const headers = sheet.getRange(1, 1, 1, 11).getValues()[0];
   
   if (headers[0] !== 'key') {
-    sheet.getRange(1, 1, 1, 10).setValues([
+    sheet.getRange(1, 1, 1, 11).setValues([
       ['key', 'name', 'rank', 'teamNumber', 'serialNumber', 'gender', 'image', 'pdf1', 'pdf2', 'pdf3', 'date']
     ]);
   }

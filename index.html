@@ -636,6 +636,10 @@
           utils.setTextContent('wisdomQuote', '');
           const progressValue = utils.getElement('progressValue');
           if (progressValue) progressValue.style.width = '0%';
+          
+          // Clear existing intervals if any
+          if (progressInterval) clearInterval(progressInterval);
+          if (quoteInterval) clearInterval(quoteInterval);
         }
       }
     };
@@ -703,15 +707,21 @@
       
       // Set progress to 100%
       utils.setTextContent('progressPercentage', '100%');
+      utils.setTextContent('progressText', 'اكتمل التحميل!');
       const progressValue = utils.getElement('progressValue');
       if (progressValue) progressValue.style.width = '100%';
       
-      // Reset after animation completes
+      // Hide progress after a short delay
       setTimeout(() => {
-        utils.setTextContent('progressText', '');
-        utils.setTextContent('progressPercentage', '0%');
-        utils.setTextContent('wisdomQuote', '');
-        if (progressValue) progressValue.style.width = '0%';
+        utils.hideElement('loadingProgress');
+        
+        // Reset progress for next time
+        setTimeout(() => {
+          utils.setTextContent('progressText', '');
+          utils.setTextContent('progressPercentage', '0%');
+          utils.setTextContent('wisdomQuote', '');
+          if (progressValue) progressValue.style.width = '0%';
+        }, 200);
       }, 500);
     }
     
@@ -744,55 +754,61 @@
       appState.accessKey = key;
       
       try {
-        // This would normally call google.script.run.validateKey(key)
-        const response = await new Promise((resolve) => {
-          google.script.run
-            .withSuccessHandler(function(result) {
-              resolve(result);
-            })
-            .withFailureHandler(function(error) {
-              throw new Error(error);
-            })
-            .validateKey(key);
-        });
-        
-        if (response.isValid) {
-          appState.userRank = response.rank;
-          appState.isKeyUsed = response.used;
-          appState.previousFiles = response.previousFiles || [];
-          
-          // If the key has been used (except for قائد) and there are previous files,
-          // go directly to result section with those files
-          if (response.used && response.previousFiles && response.previousFiles.length > 0) {
-            // Find the most recent submission for this key
-            const latestSubmission = response.previousFiles[0];
-            appState.results = {
-              pdf1: latestSubmission.pdf1,
-              pdf2: latestSubmission.pdf2,
-              pdf3: latestSubmission.pdf3
-            };
-            appState.fullName = latestSubmission.name;
-            showStep('result');
-            renderResultStep();
-            
-            utils.showToast(
-              "تم التعرف عليك",
-              "تم استرجاع بياناتك السابقة بنجاح",
-              "success"
-            );
-          } else {
-            // Proceed to form for new submission
-            showStep('form');
-            renderFormStep();
-          }
-        } else {
-          utils.showElement('errorMsg');
-          utils.setTextContent('errorMsg', 'المفتاح غير صحيح');
-        }
+        // Call Google Script function
+        google.script.run
+          .withSuccessHandler(function(response) {
+            // Process successful response
+            if (response.isValid) {
+              appState.userRank = response.rank;
+              appState.isKeyUsed = response.used;
+              appState.previousFiles = response.previousFiles || [];
+              
+              // If the key has been used and there are previous files,
+              // go directly to result section with those files
+              if (response.used && response.previousFiles && response.previousFiles.length > 0) {
+                // Find the most recent submission for this key
+                const latestSubmission = response.previousFiles[0];
+                appState.results = {
+                  pdf1: latestSubmission.pdf1,
+                  pdf2: latestSubmission.pdf2,
+                  pdf3: latestSubmission.pdf3
+                };
+                appState.fullName = latestSubmission.name;
+                
+                stopProgress();
+                showStep('result');
+                renderResultStep();
+                
+                utils.showToast(
+                  "تم التعرف عليك",
+                  "تم استرجاع بياناتك السابقة بنجاح",
+                  "success"
+                );
+              } else {
+                // Proceed to form for new submission
+                stopProgress();
+                showStep('form');
+                renderFormStep();
+              }
+            } else {
+              stopProgress();
+              utils.showElement('errorMsg');
+              utils.setTextContent('errorMsg', 'المفتاح غير صحيح');
+            }
+            utils.setLoading(false);
+          })
+          .withFailureHandler(function(error) {
+            // Handle error
+            stopProgress();
+            utils.showElement('errorMsg');
+            utils.setTextContent('errorMsg', error.message || 'حدث خطأ، الرجاء المحاولة لاحقًا');
+            utils.setLoading(false);
+          })
+          .validateKey(key);
       } catch (err) {
+        stopProgress();
         utils.showElement('errorMsg');
         utils.setTextContent('errorMsg', err.message || 'حدث خطأ، الرجاء المحاولة لاحقًا');
-      } finally {
         utils.setLoading(false);
       }
     }
@@ -873,6 +889,7 @@
         
         // Add photo if provided
         if (appState.photoFile) {
+          // Read file as Base64
           const base64String = await new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -886,36 +903,42 @@
           formData.mimeType = appState.photoFile.type;
         }
         
-        // Process form data
-        const response = await new Promise((resolve) => {
-          google.script.run
-            .withSuccessHandler(function(result) {
-              resolve(result);
-            })
-            .withFailureHandler(function(error) {
-              throw new Error(error);
-            })
-            .processFormWithImage(formData);
-        });
-        
-        if (response) {
-          appState.results = response;
-          showStep('result');
-          renderResultStep();
-          
-          utils.showToast(
-            "نجاح",
-            "تم إنشاء الملفات بنجاح",
-            "success"
-          );
-        }
+        // Process form data with Google Script
+        google.script.run
+          .withSuccessHandler(function(response) {
+            // Process successful response
+            if (response) {
+              appState.results = response;
+              stopProgress();
+              showStep('result');
+              renderResultStep();
+              
+              utils.showToast(
+                "نجاح",
+                "تم إنشاء الملفات بنجاح",
+                "success"
+              );
+            }
+            utils.setLoading(false);
+          })
+          .withFailureHandler(function(error) {
+            // Handle error
+            stopProgress();
+            utils.showToast(
+              "خطأ",
+              error.message || "حدث خطأ أثناء معالجة الطلب",
+              "error"
+            );
+            utils.setLoading(false);
+          })
+          .processFormWithImage(formData);
       } catch (error) {
+        stopProgress();
         utils.showToast(
           "خطأ",
           error.message || "حدث خطأ أثناء معالجة الطلب",
           "error"
         );
-      } finally {
         utils.setLoading(false);
       }
     }
@@ -1034,7 +1057,7 @@
             <div class="flex justify-between items-center mb-2">
               <span class="font-medium">${file.name}</span>
               <span class="text-xs ${appState.isDarkMode ? 'text-gray-400' : 'text-gray-500'}">
-                ${file.date}
+                ${file.date ? utils.formatDate(file.date) : ""}
               </span>
             </div>
             <div class="grid grid-cols-1 gap-2">
@@ -1144,6 +1167,8 @@
         
         availableTabs.forEach(tab => {
           const pdfUrl = appState.results[tab];
+          if (!pdfUrl) return;
+          
           const pdfFilename = `${utils.getTabName(tab)}_${appState.fullName}.pdf`;
           
           const panel = document.createElement('div');
