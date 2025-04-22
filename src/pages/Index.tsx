@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
@@ -142,6 +143,11 @@ const Index = () => {
   
   const photoInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Adding the missing toggleDarkMode function
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => !prev);
+  };
 
   useEffect(() => {
     // Initialize particles effect
@@ -751,4 +757,122 @@ const Index = () => {
                                 }`}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                  <polyline points="7 10 12 15 17 10"></polyline>
+                                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                البطاقة
+                              </a>
+                            )}
+                            {file.pdf3 && (
+                              <a 
+                                href={file.pdf3} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className={`text-sm flex items-center p-2 rounded ${
+                                  isDarkMode ? 'bg-gray-700 text-green-300 hover:bg-gray-600' : 'bg-gray-100 text-green-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                  <polyline points="7 10 12 15 17 10"></polyline>
+                                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                شهادة اللجان
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Results section */}
+        {currentStep === "result" && (
+          <div className="space-y-6 animate-fade-in" data-section="result" data-allowed="true">
+            <div className="text-center">
+              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                تم إنشاء الملفات بنجاح
+              </h2>
+              <p className={`mt-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                يمكنك تحميل الملفات من خلال الروابط أدناه
+              </p>
+            </div>
+
+            {results && getAvailableTabs(results).length > 0 ? (
+              <Tabs defaultValue={getAvailableTabs(results)[0]} className="mt-6" onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-3">
+                  {getAvailableTabs(results).map((tab) => (
+                    <TabsTrigger key={tab} value={tab} className="text-sm">
+                      {getTabName(tab)}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                
+                {getAvailableTabs(results).map((tab) => (
+                  <TabsContent key={tab} value={tab} className="mt-4">
+                    <div className={`rounded-lg overflow-hidden border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                      <div className={`p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} flex justify-between items-center`}>
+                        <h3 className="font-medium">{getTabName(tab)}</h3>
+                        <button
+                          onClick={() => {
+                            const url = results[tab as keyof PDFResult] as string;
+                            const filename = `${getTabName(tab)}-${fullName}.pdf`;
+                            downloadPDF(url, filename);
+                          }}
+                          className={`flex items-center gap-1 text-sm px-3 py-1 rounded-md ${
+                            isDarkMode 
+                              ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                              : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                          }`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                          </svg>
+                          تحميل
+                        </button>
+                      </div>
+                      <div className="p-4">
+                        <iframe 
+                          src={results[tab as keyof PDFResult] as string} 
+                          className={`w-full h-96 border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} rounded`}
+                          title={getTabName(tab)}
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            ) : (
+              <div className={`text-center p-8 rounded-lg ${isDarkMode ? 'bg-gray-800/80' : 'bg-gray-100/80'}`}>
+                <p className="text-gray-500">لم يتم إنشاء أي ملفات</p>
+              </div>
+            )}
+            
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={restartProcess}
+                className={`px-4 py-2 rounded-lg transition-all ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                العودة للبداية
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Index;
