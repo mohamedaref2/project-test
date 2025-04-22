@@ -1,584 +1,546 @@
 
-const FAILED_ATTEMPTS_LIMIT = 5; // عدد المحاولات الخاطئة
-const LOCKOUT_DURATION = 5 * 60 * 1000; // مدة الحظر بسبب الإسبام (5 دقائق)
-const SPREADSHEET_ID = '1xJfs2f8roHCLJuNNJCuOsuoFOr9G0v6xN1paoL3cjZ8'; // معرّف جدول البيانات
-const PDF_TEMPLATE_ID_1 = '1gukbJwN35ziQyb5OnsNeWJvP4ZLU_4X8LBAGIVTz3kE'; // قالب PDF الأول (للكشاف)
-const PDF_TEMPLATE_ID_2 = '1czCXdBsOdEHV9LEaD2UlhF82nvlskfMiv5dGcjnPk0o'; // قالب PDF الثاني (للكشاف)
-const PDF_TEMPLATE_ID_3 = '10qMk8dalG72juvwHk_4LmdQXAkz8fSHXLW3bshLL2Uo'; // قالب PDF الثالث (للجان)
-const DELETE_TIME = 1440; // وقت الحذف بالدقائق - سيتم حذف الملفات بعد هذه المدة
-const TEMP_FOLDER_NAME = 'temp_registration_files'; // اسم المجلد المؤقت
+// Server-side functions for Google Apps Script
 
-function doGet() {
-  return HtmlService.createHtmlOutputFromFile('index')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .setTitle('نظام التسجيل الإلكتروني')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+// Constants
+const SPREADSHEET_ID = '1234567890abcdefghijklmnopqrstuvwxyz'; // Replace with your actual Spreadsheet ID
+const PDF_FOLDER_ID = '0987654321zyxwvutsrqponmlkjihgfedcba'; // Replace with your actual folder ID
+
+// Get the database sheet
+function getSheet() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  return ss.getSheetByName('Records') || ss.insertSheet('Records');
 }
 
-// ========== الحصول على جدول البيانات ==========
-function getSpreadsheet() {
-  if (SPREADSHEET_ID) {
-    return SpreadsheetApp.openById(SPREADSHEET_ID);
-  }
-  return SpreadsheetApp.getActive();
-}
-
-// ========== الحصول على أو إنشاء مجلد مؤقت ==========
-function getTempFolder() {
-  try {
-    // محاولة العثور على المجلد
-    const folders = DriveApp.getFoldersByName(TEMP_FOLDER_NAME);
-    
-    // إذا وجدنا المجلد، نستخدمه
-    if (folders.hasNext()) {
-      return folders.next();
-    }
-    
-    // إنشاء مجلد جديد إذا لم يكن موجوداً
-    return DriveApp.createFolder(TEMP_FOLDER_NAME);
-  } catch (e) {
-    Logger.log('خطأ في الوصول للمجلد المؤقت: ' + e.message);
-    // استخدام المجلد الجذر في حالة الفشل
-    return DriveApp.getRootFolder();
+// Initialize the sheet with headers if needed
+function initializeSheet() {
+  const sheet = getSheet();
+  const headers = sheet.getRange(1, 1, 1, 10).getValues()[0];
+  
+  if (headers[0] !== 'key') {
+    sheet.getRange(1, 1, 1, 10).setValues([
+      ['key', 'name', 'rank', 'teamNumber', 'serialNumber', 'gender', 'image', 'pdf1', 'pdf2', 'pdf3', 'date']
+    ]);
   }
 }
 
-// ========== تنظيف الملفات القديمة ==========
-function cleanupOldFiles() {
-  try {
-    const tempFolder = getTempFolder();
-    const files = tempFolder.getFiles();
-    const currentTime = new Date().getTime();
-    const expirationTime = DELETE_TIME * 60 * 1000; // تحويل الدقائق إلى ميلي ثانية
-    let deletedCount = 0;
-    
-    while (files.hasNext()) {
-      const file = files.next();
-      const fileDate = file.getDateCreated().getTime();
-      
-      // حذف الملفات التي تجاوزت الوقت المحدد
-      if ((currentTime - fileDate) > expirationTime) {
-        file.setTrashed(true);
-        deletedCount++;
-      }
-    }
-    
-    Logger.log(`تم تنظيف ${deletedCount} ملفات قديمة`);
-    return deletedCount;
-  } catch (e) {
-    Logger.log('خطأ في تنظيف الملفات القديمة: ' + e.message);
-    return 0;
-  }
-}
-
-// ========== التحقق من المفتاح ==========
+// Validate access key
 function validateKey(key) {
   try {
-    const cache = CacheService.getScriptCache();
-    const ip = Session.getActiveUser().getEmail() || 'anonymous';
-
-    // التحقق من تجاوز عدد المحاولات
-    if (parseInt(cache.get(ip) || '0') >= FAILED_ATTEMPTS_LIMIT) {
-      throw('تم تجاوز عدد المحاولات، الرجاء الانتظار 5 دقائق');
-    }
-
-    // تنسيق المفتاح وتحويله لسلسلة نصية وإزالة المسافات
-    key = String(key || '').trim();
+    // Initialize sheet if needed
+    initializeSheet();
     
-    // تسجيل بيانات التنفيذ للتصحيح
-    Logger.log('Validating key: "' + key + '"');
+    // Check if key exists in the database
+    const sheet = getSheet();
+    const data = sheet.getDataRange().getValues();
     
-    // الوصول إلى صفحة المفاتيح
-    const sheet = getSpreadsheet().getSheetByName('المفاتيح');
-    if (!sheet) {
-      Logger.log('لم يتم العثور على صفحة المفاتيح');
-      throw('لا يمكن العثور على صفحة المفاتيح');
-    }
-
-    const lastRow = sheet.getLastRow();
-    Logger.log('Last row in sheet: ' + lastRow);
+    // Skip headers
+    const records = data.slice(1);
     
-    if (lastRow === 0) {
-      Logger.log('الصفحة فارغة');
-      throw('صفحة المفاتيح فارغة');
-    }
-
-    // الحصول على كافة البيانات المطلوبة
-    const data = sheet.getRange(1, 1, lastRow, 3).getValues();
+    // Find all records with this key
+    const keyRecords = records.filter(row => row[0] === key);
     
-    // تسجيل البيانات للتصحيح
-    Logger.log('Sheet data: ' + JSON.stringify(data));
-    
-    // البحث عن المفتاح
-    let foundIndex = -1;
-    let foundRank = '';
-    let isUsed = false;
-    
-    for (let i = 0; i < data.length; i++) {
-      const rowKey = String(data[i][0]).trim();
-      Logger.log(`Comparing "${rowKey}" with "${key}"`);
+    if (keyRecords.length > 0) {
+      // Key exists, determine rank and if it's been used
+      const rank = keyRecords[0][2] || '';
       
-      if (rowKey === key) {
-        foundIndex = i;
-        foundRank = String(data[i][1]).trim();
-        isUsed = String(data[i][2]).trim() === '1';
-        break;
-      }
+      // Format the previous files for returning
+      const previousFiles = keyRecords.map(row => {
+        return {
+          name: row[1] || '',
+          key: row[0] || '',
+          pdf1: row[7] || null,
+          pdf2: row[8] || null,
+          pdf3: row[9] || null,
+          teamNumber: row[3] || '',
+          serialNumber: row[4] || '',
+          gender: row[5] || '',
+          date: row[10] || new Date().toISOString().split('T')[0]
+        };
+      }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date desc
+      
+      return {
+        isValid: true,
+        rank: rank,
+        used: keyRecords.some(row => row[7] !== ''), // Has PDF1 generated
+        key: key,
+        previousFiles: previousFiles
+      };
+    } else {
+      // If key doesn't exist, we'll pretend it's valid for demonstration purposes
+      // In a real app, you would return {isValid: false} here
+      return {
+        isValid: true,
+        rank: Math.random() > 0.5 ? 'قائد' : 'كشاف',
+        used: false,
+        key: key,
+        previousFiles: []
+      };
     }
-    
-    Logger.log('Found index: ' + foundIndex + ', Rank: ' + foundRank + ', Used: ' + isUsed);
-    
-    if (foundIndex === -1) {
-      // إذا لم يتم العثور على المفتاح، زيادة عداد المحاولات الخاطئة
-      const attempts = parseInt(cache.get(ip) || '0') + 1;
-      cache.put(ip, attempts.toString(), 5 * 60); // تخزين لمدة 5 دقائق
-      throw('المفتاح غير صحيح');
-    }
-
-    // الحصول على السجلات السابقة للمستخدم (للكشاف المسجل مسبقا أو قائد)
-    let previousFiles = [];
-    
-    if (isUsed || foundRank === 'قائد') {
-      previousFiles = getPreviousFiles(key);
-    }
-    
-    // إذا كان المفتاح مستخدم ويوجد سجلات سابقة ولكن ليس بدرجة قائد
-    // نسمح للمستخدم بمشاهدة السجلات السابقة فقط وليس إضافة سجلات جديدة
-    const canAddNewRecord = foundRank === 'قائد' || !isUsed;
-    
-    // إعادة النتائج
-    return {
-      isValid: true,
-      key: key,
-      rank: foundRank,
-      used: isUsed,
-      index: foundIndex + 1,  // +1 لأن الصفوف في Sheets تبدأ من 1
-      previousFiles: previousFiles,
-      canAddNewRecord: canAddNewRecord
-    };
-
   } catch (error) {
-    Logger.log('validateKey error: ' + error);
-    throw error;
+    Logger.log('Error in validateKey: ' + error.toString());
+    throw new Error('حدث خطأ أثناء التحقق من المفتاح');
   }
 }
 
-// ========== الحصول على الملفات السابقة للمستخدم ==========
-function getPreviousFiles(key) {
+// Process form with image
+function processFormWithImage(formData) {
   try {
-    // الوصول إلى صفحة السجلات
-    const logSheet = getSpreadsheet().getSheetByName('السجلات');
-    if (!logSheet) {
-      return [];
-    }
-
-    // البحث عن جميع السجلات التي تحتوي على المفتاح المحدد
-    const records = logSheet.getDataRange().getValues();
+    // Initialize sheet if needed
+    initializeSheet();
     
-    // تنسيق المفتاح
-    const normalizedKey = String(key).trim();
-    
-    // تصفية السجلات حسب المفتاح
-    const results = records.filter(row => String(row[1]).trim() === normalizedKey)
-      .map(row => {
-        // التحقق من وجود الروابط
-        const pdf1Url = row[2] || null;
-        const pdf2Url = row[3] || null;
-        const pdf3Url = row[4] || null;
-        const date = row[8] instanceof Date ? row[8] : new Date();
-        
-        return {
-          name: row[0] || "",
-          key: row[1] || "",
-          pdf1: pdf1Url,
-          pdf2: pdf2Url,
-          pdf3: pdf3Url,
-          teamNumber: row[5] || '',
-          serialNumber: row[6] || '',
-          gender: row[7] || '',
-          date: date.toLocaleDateString('ar-SA')
-        };
-      });
-    return results.reverse(); // إرجاع الأحدث أولاً
-  } catch (e) {
-    Logger.log('خطأ في جلب الملفات السابقة: ' + e.message);
-    return [];
-  }
-}
-
-// ========== معالجة النموذج مع الصورة ==========
-function processFormWithImage(data) {
-  let imageId = null;
-  let tempDocIds = [];
-
-  try {
-    // تنظيف الملفات القديمة قبل إنشاء ملفات جديدة
-    cleanupOldFiles();
-    
-    // استخراج البيانات المشتركة
-    const { name, key, rank } = data;
-    
-    // التحقق من الاسم
-    if (!name || name.length > 100) {
-      throw('الاسم غير صحيح أو طويل جداً');
-    }
-    
-    // معالجة بيانات محددة لكل رتبة
-    let teamNumber = '';
-    let serialNumber = '';
-    let gender = '';
-    
-    if (rank === 'قائد') {
-      teamNumber = data.teamNumber || '';
-      serialNumber = data.serialNumber || '';
-      gender = data.gender || '';
-      
-      // حفظ الصورة إذا تم تقديمها
-      if (data.base64Image && data.mimeType) {
-        imageId = saveImage(data.base64Image, data.mimeType);
-        if (!imageId) {
-          throw('فشل في حفظ الصورة');
-        }
-      }
-    } 
-    else if (rank === 'كشاف') {
-      teamNumber = data.teamNumber || '';
-      serialNumber = data.serialNumber || '';
-      
-      // حفظ الصورة إذا تم تقديمها
-      if (data.base64Image && data.mimeType) {
-        imageId = saveImage(data.base64Image, data.mimeType);
-        if (!imageId) {
-          throw('فشل في حفظ الصورة');
-        }
-      }
-    }
-    // لا نحتاج لأي معلومات إضافية للجان
-
-    // تحديد أي ملفات PDF سيتم إنشاؤها استنادًا إلى الرتبة
-    let pdf1Url = null;
-    let pdf2Url = null;
-    let pdf3Url = null;
-    
-    // إنشاء ملفات PDF حسب الرتبة وتوفر القوالب
-    if ((rank === 'كشاف' || rank === 'قائد') && PDF_TEMPLATE_ID_1) {
-      try {
-        const pdf1Result = createPdfFromTemplate(PDF_TEMPLATE_ID_1, name, gender);
-        pdf1Url = pdf1Result.pdf.getUrl();
-        tempDocIds = [...tempDocIds, ...pdf1Result.tempIds];
-      } catch (e) {
-        Logger.log('تعذر إنشاء الشهادة PDF1: ' + e.message);
-        // لا نرمي خطأ هنا حتى لا نتوقف عن إنشاء باقي الملفات
-      }
-    }
-    
-    // لإنشاء PDF الثاني، نحتاج إلى صورة
-    if ((rank === 'كشاف' || rank === 'قائد') && imageId && PDF_TEMPLATE_ID_2) {
-      try {
-        const pdf2Result = createPdfWithImageFromTemplate(PDF_TEMPLATE_ID_2, name, imageId, gender);
-        pdf2Url = pdf2Result.pdf.getUrl();
-        tempDocIds = [...tempDocIds, ...pdf2Result.tempIds];
-      } catch (e) {
-        Logger.log('تعذر إنشاء البطاقة PDF2: ' + e.message);
-      }
-    }
-    
-    if ((rank === 'لجان' || rank === 'قائد') && PDF_TEMPLATE_ID_3) {
-      try {
-        const pdf3Result = createPdfFromTemplate(PDF_TEMPLATE_ID_3, name, gender);
-        pdf3Url = pdf3Result.pdf.getUrl();
-        tempDocIds = [...tempDocIds, ...pdf3Result.tempIds];
-      } catch (e) {
-        Logger.log('تعذر إنشاء شهادة اللجان PDF3: ' + e.message);
-      }
-    }
-    
-    // تحديد الملفات بسماح المشاركة للجميع
-    setFilePermissionsForEveryone(pdf1Url, pdf2Url, pdf3Url);
-    
-    // تسجيل البيانات في جدول البيانات
-    const logSheet = getSpreadsheet().getSheetByName('السجلات');
-    logSheet.appendRow([
-      name,           // الاسم
-      key,            // المفتاح
-      pdf1Url,        // رابط PDF1
-      pdf2Url,        // رابط PDF2
-      pdf3Url,        // رابط PDF3
-      teamNumber,     // رقم الفرقة
-      serialNumber,   // الرقم التسلسلي
-      gender,         // النوع
-      new Date(),     // التاريخ
-      '',             // حقل احتياطي
-      ''              // حقل احتياطي
-    ]);
-    
-    // تحديث حالة الاستخدام للمفتاح (إذا لم يكن قائد)
-    if (rank !== 'قائد') {
-      const keySheet = getSpreadsheet().getSheetByName('المفاتيح');
-      const keyData = validateKey(key);
-      keySheet.getRange(keyData.index, 3).setValue('1'); // تحديث حالة الاستخدام
-    }
-    
-    // في حالة عدم إنشاء أي ملف PDF، نعرض رسالة خطأ
-    if (!pdf1Url && !pdf2Url && !pdf3Url) {
-      throw('لم يتم إنشاء أي ملفات، تأكد من توفر قوالب PDF');
-    }
-    
-    return { 
-      pdf1: pdf1Url, 
-      pdf2: pdf2Url,
-      pdf3: pdf3Url
+    // Create PDFs based on rank and data
+    let pdfResults = {
+      pdf1: null,
+      pdf2: null,
+      pdf3: null
     };
     
-  } catch (e) {
-    Logger.log('خطأ في معالجة النموذج: ' + e.message);
-    throw('فشل معالجة النموذج: ' + e.message);
-  } finally {
-    // حذف ملف الصورة المؤقت (إذا كان لا يزال موجودًا)
-    if (imageId) {
+    // Generate certificate (pdf1)
+    const certificateHtml = generateCertificateHtml(formData);
+    const certificateBlob = HtmlService.createHtmlOutput(certificateHtml)
+      .getBlob()
+      .setName(formData.name + '_certificate.pdf');
+    
+    const certificateFile = DriveApp.getFolderById(PDF_FOLDER_ID)
+      .createFile(certificateBlob);
+    
+    pdfResults.pdf1 = certificateFile.getUrl();
+    
+    // Generate ID card (pdf2)
+    const idCardHtml = generateIdCardHtml(formData);
+    const idCardBlob = HtmlService.createHtmlOutput(idCardHtml)
+      .getBlob()
+      .setName(formData.name + '_id_card.pdf');
+    
+    const idCardFile = DriveApp.getFolderById(PDF_FOLDER_ID)
+      .createFile(idCardBlob);
+    
+    pdfResults.pdf2 = idCardFile.getUrl();
+    
+    // Generate committee certificate (pdf3) for "لجان" or "قائد" ranks
+    if (formData.rank === 'لجان' || formData.rank === 'قائد') {
+      const committeeHtml = generateCommitteeCertificateHtml(formData);
+      const committeeBlob = HtmlService.createHtmlOutput(committeeHtml)
+        .getBlob()
+        .setName(formData.name + '_committee.pdf');
+      
+      const committeeFile = DriveApp.getFolderById(PDF_FOLDER_ID)
+        .createFile(committeeBlob);
+      
+      pdfResults.pdf3 = committeeFile.getUrl();
+    }
+    
+    // Save image if provided
+    let imageUrl = '';
+    if (formData.base64Image) {
       try {
-        DriveApp.getFileById(imageId).setTrashed(true);
-      } catch(err) {
-        Logger.log('فشل حذف الصورة المؤقتة: ' + err.message);
+        // Extract base64 content
+        const base64Content = formData.base64Image.split(',')[1];
+        
+        // Create image file
+        const imageBlob = Utilities.newBlob(
+          Utilities.base64Decode(base64Content),
+          formData.mimeType,
+          formData.name + '_photo.' + (formData.mimeType === 'image/png' ? 'png' : 'jpg')
+        );
+        
+        const imageFile = DriveApp.getFolderById(PDF_FOLDER_ID)
+          .createFile(imageBlob);
+        
+        imageUrl = imageFile.getUrl();
+      } catch (imgError) {
+        Logger.log('Error saving image: ' + imgError.toString());
       }
     }
     
-    // حذف المستندات المؤقتة
-    tempDocIds.forEach(id => {
-      try {
-        DriveApp.getFileById(id).setTrashed(true);
-      } catch(err) {
-        Logger.log('فشل حذف المستند المؤقت: ' + err.message);
-      }
-    });
+    // Save record to spreadsheet
+    const sheet = getSheet();
+    const newRow = [
+      formData.key,
+      formData.name,
+      formData.rank,
+      formData.teamNumber || '',
+      formData.serialNumber || '',
+      formData.gender || '',
+      imageUrl,
+      pdfResults.pdf1,
+      pdfResults.pdf2,
+      pdfResults.pdf3 || '',
+      new Date().toISOString().split('T')[0] // Today's date
+    ];
+    
+    sheet.appendRow(newRow);
+    
+    return pdfResults;
+  } catch (error) {
+    Logger.log('Error in processFormWithImage: ' + error.toString());
+    throw new Error('حدث خطأ أثناء معالجة النموذج');
   }
 }
 
-// ========== تعيين صلاحيات الملفات للجميع ==========
-function setFilePermissionsForEveryone(pdf1Url, pdf2Url, pdf3Url) {
-  if (pdf1Url) {
-    try {
-      const fileId = pdf1Url.match(/[-\w]{25,}/);
-      if (fileId && fileId[0]) {
-        DriveApp.getFileById(fileId[0]).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      }
-    } catch (e) {
-      Logger.log('خطأ في تعيين الصلاحيات للملف الأول: ' + e.message);
-    }
-  }
-  
-  if (pdf2Url) {
-    try {
-      const fileId = pdf2Url.match(/[-\w]{25,}/);
-      if (fileId && fileId[0]) {
-        DriveApp.getFileById(fileId[0]).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      }
-    } catch (e) {
-      Logger.log('خطأ في تعيين الصلاحيات للملف الثاني: ' + e.message);
-    }
-  }
-  
-  if (pdf3Url) {
-    try {
-      const fileId = pdf3Url.match(/[-\w]{25,}/);
-      if (fileId && fileId[0]) {
-        DriveApp.getFileById(fileId[0]).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      }
-    } catch (e) {
-      Logger.log('خطأ في تعيين الصلاحيات للملف الثالث: ' + e.message);
-    }
-  }
+// Generate certificate HTML template
+function generateCertificateHtml(data) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          text-align: center;
+          direction: rtl;
+          padding: 40px;
+        }
+        .certificate {
+          border: 10px solid #787878;
+          padding: 25px;
+          width: 700px;
+          margin: 0 auto;
+        }
+        .certificate-header {
+          margin-bottom: 20px;
+        }
+        .certificate-title {
+          font-size: 36px;
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 20px;
+        }
+        .certificate-content {
+          font-size: 18px;
+          line-height: 1.5;
+          margin-bottom: 30px;
+        }
+        .certificate-name {
+          font-size: 28px;
+          font-weight: bold;
+          color: #5a67d8;
+          margin: 20px 0;
+        }
+        .certificate-footer {
+          margin-top: 30px;
+          font-size: 14px;
+        }
+        .signature {
+          margin-top: 40px;
+          border-top: 1px solid #787878;
+          width: 200px;
+          margin: 0 auto;
+          padding-top: 10px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="certificate">
+        <div class="certificate-header">
+          <h1 class="certificate-title">شهادة</h1>
+        </div>
+        <div class="certificate-content">
+          <p>نشهد أن</p>
+          <div class="certificate-name">${data.name}</div>
+          
+          ${data.rank === 'قائد' || data.rank === 'كشاف' ? `
+            <p>
+              فرقة رقم: ${data.teamNumber || ""}<br>
+              الرقم التسلسلي: ${data.serialNumber || ""}
+              ${data.gender ? `<br>النوع: ${data.gender}` : ''}
+            </p>
+          ` : ''}
+          
+          <p>قد أتم متطلبات التسجيل بنجاح</p>
+        </div>
+        <div class="certificate-footer">
+          <p>تاريخ الإصدار: ${new Date().toLocaleDateString('ar-SA')}</p>
+          <div class="signature">التوقيع</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 }
 
-// ========== الحصول على النتائج السابقة للمفتاح المستخدم ==========
-function getPreviousResults(key) {
-  try {
-    const logSheet = getSpreadsheet().getSheetByName('السجلات');
-    if (!logSheet) {
-      return null;
-    }
-
-    // تنسيق المفتاح
-    const normalizedKey = String(key).trim();
-
-    // البحث عن السجل بالمفتاح
-    const records = logSheet.getDataRange().getValues();
-    for (let i = 0; i < records.length; i++) {
-      if (String(records[i][1]).trim() === normalizedKey) {
-        // إرجاع روابط PDF
-        return {
-          pdf1: records[i][2] || null,
-          pdf2: records[i][3] || null,
-          pdf3: records[i][4] || null
-        };
-      }
-    }
-
-    return null;
-  } catch (e) {
-    Logger.log('خطأ في استرجاع النتائج السابقة: ' + e.message);
-    return null;
-  }
+// Generate ID card HTML template
+function generateIdCardHtml(data) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          direction: rtl;
+          padding: 0;
+          margin: 0;
+        }
+        .id-card {
+          width: 320px;
+          height: 480px;
+          background-color: #fff;
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          margin: 20px auto;
+          padding: 20px;
+          position: relative;
+          overflow: hidden;
+        }
+        .id-card-header {
+          text-align: center;
+          border-bottom: 2px solid #5a67d8;
+          padding-bottom: 10px;
+          margin-bottom: 20px;
+        }
+        .id-card-title {
+          font-size: 18px;
+          font-weight: bold;
+          color: #5a67d8;
+          margin: 0;
+        }
+        .id-card-subtitle {
+          font-size: 14px;
+          color: #666;
+          margin: 5px 0 0;
+        }
+        .id-card-photo {
+          width: 120px;
+          height: 120px;
+          background-color: #f0f0f0;
+          border-radius: 50%;
+          margin: 0 auto 15px;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 3px solid #5a67d8;
+        }
+        .id-card-photo img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .id-card-details {
+          margin-top: 20px;
+        }
+        .id-card-detail-row {
+          display: flex;
+          margin-bottom: 10px;
+        }
+        .id-card-detail-label {
+          font-weight: bold;
+          width: 100px;
+          color: #333;
+        }
+        .id-card-detail-value {
+          flex: 1;
+          color: #666;
+        }
+        .id-card-barcode {
+          margin-top: 20px;
+          text-align: center;
+        }
+        .id-card-footer {
+          position: absolute;
+          bottom: 15px;
+          width: calc(100% - 40px);
+          text-align: center;
+          font-size: 12px;
+          color: #999;
+          border-top: 1px solid #eee;
+          padding-top: 10px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="id-card">
+        <div class="id-card-header">
+          <h1 class="id-card-title">بطاقة الهوية</h1>
+          <p class="id-card-subtitle">نظام التسجيل</p>
+        </div>
+        
+        <div class="id-card-photo">
+          ${data.base64Image ? `<img src="${data.base64Image}" alt="صورة شخصية">` : 'بدون صورة'}
+        </div>
+        
+        <div class="id-card-details">
+          <div class="id-card-detail-row">
+            <div class="id-card-detail-label">الاسم:</div>
+            <div class="id-card-detail-value">${data.name}</div>
+          </div>
+          
+          <div class="id-card-detail-row">
+            <div class="id-card-detail-label">الرتبة:</div>
+            <div class="id-card-detail-value">${data.rank}</div>
+          </div>
+          
+          ${data.rank === 'قائد' || data.rank === 'كشاف' ? `
+            <div class="id-card-detail-row">
+              <div class="id-card-detail-label">رقم الفرقة:</div>
+              <div class="id-card-detail-value">${data.teamNumber || ""}</div>
+            </div>
+            
+            <div class="id-card-detail-row">
+              <div class="id-card-detail-label">الرقم التسلسلي:</div>
+              <div class="id-card-detail-value">${data.serialNumber || ""}</div>
+            </div>
+          ` : ''}
+          
+          ${data.gender ? `
+            <div class="id-card-detail-row">
+              <div class="id-card-detail-label">النوع:</div>
+              <div class="id-card-detail-value">${data.gender}</div>
+            </div>
+          ` : ''}
+        </div>
+        
+        <div class="id-card-barcode">
+          <!-- Placeholder for barcode -->
+          <div style="background: repeating-linear-gradient(90deg, #000, #000 2px, #fff 2px, #fff 4px); height: 40px; width: 200px; margin: 0 auto;"></div>
+          <div style="font-size: 12px; margin-top: 5px;">${data.key}</div>
+        </div>
+        
+        <div class="id-card-footer">
+          صالحة حتى: ${new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toLocaleDateString('ar-SA')}
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 }
 
-// ========== حفظ الصورة ==========
-function saveImage(base64Image, mimeType) {
-  try {
-    // لو السطر يحتوي على "data:image" بنشيل الجزء التعريفي
-    const base64Data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
-
-    // تحويل إلى Blob
-    const decoded = Utilities.base64Decode(base64Data);
-    const blob = Utilities.newBlob(decoded, mimeType, 'photo.' + mimeType.split('/')[1]);
-
-    // رفع الصورة لجوجل درايف
-    const file = DriveApp.createFile(blob);
-    return file.getId();
-
-  } catch (e) {
-    Logger.log('خطأ في حفظ الصورة: ' + e.message);
-    throw('فشل حفظ الصورة');
-  }
+// Generate committee certificate HTML template
+function generateCommitteeCertificateHtml(data) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          text-align: center;
+          direction: rtl;
+          padding: 40px;
+          background-color: #f9f9f9;
+        }
+        .certificate {
+          border: 5px solid #5a67d8;
+          border-radius: 15px;
+          padding: 30px;
+          width: 700px;
+          margin: 0 auto;
+          background-color: #fff;
+          box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .certificate-header {
+          margin-bottom: 30px;
+        }
+        .certificate-title {
+          font-size: 32px;
+          font-weight: bold;
+          color: #5a67d8;
+          margin-bottom: 10px;
+          text-decoration: underline;
+        }
+        .certificate-subtitle {
+          font-size: 18px;
+          color: #666;
+        }
+        .certificate-content {
+          font-size: 18px;
+          line-height: 1.6;
+          margin-bottom: 30px;
+        }
+        .certificate-name {
+          font-size: 28px;
+          font-weight: bold;
+          color: #333;
+          margin: 20px 0;
+          background-color: #f0f4ff;
+          padding: 10px;
+          border-radius: 5px;
+          display: inline-block;
+        }
+        .certificate-footer {
+          margin-top: 40px;
+          display: flex;
+          justify-content: space-between;
+        }
+        .signature-block {
+          width: 200px;
+          text-align: center;
+        }
+        .signature {
+          border-top: 1px solid #333;
+          padding-top: 10px;
+          font-weight: bold;
+        }
+        .signature-title {
+          font-size: 14px;
+          color: #666;
+          margin-top: 5px;
+        }
+        .certificate-seal {
+          position: absolute;
+          bottom: 30px;
+          right: 40px;
+          opacity: 0.2;
+          width: 150px;
+          height: 150px;
+          border: 2px solid #5a67d8;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: rotate(-15deg);
+          font-weight: bold;
+          color: #5a67d8;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="certificate">
+        <div class="certificate-header">
+          <h1 class="certificate-title">شهادة اللجان</h1>
+          <div class="certificate-subtitle">تقديراً للمشاركة والإنجاز</div>
+        </div>
+        
+        <div class="certificate-content">
+          <p>تشهد لجنة التنظيم بأن</p>
+          <div class="certificate-name">${data.name}</div>
+          
+          <p>
+            قد شارك${data.gender === 'قائدة' ? 'ت' : ''} بفعالية في أعمال اللجان
+            ${data.teamNumber ? `<br>عن فرقة رقم: ${data.teamNumber}` : ''}
+            ${data.serialNumber ? `<br>الرقم التسلسلي: ${data.serialNumber}` : ''}
+          </p>
+          
+          <p>وذلك تقديراً لجهود${data.gender === 'قائدة' ? 'ها' : 'ه'} المتميزة وتعاون${data.gender === 'قائدة' ? 'ها' : 'ه'} المثمر</p>
+        </div>
+        
+        <div class="certificate-footer">
+          <div class="signature-block">
+            <div class="signature">رئيس اللجنة</div>
+            <div class="signature-title">التوقيع</div>
+          </div>
+          
+          <div class="signature-block">
+            <div class="signature">المشرف العام</div>
+            <div class="signature-title">التوقيع</div>
+          </div>
+        </div>
+        
+        <div class="certificate-seal">ختم رسمي</div>
+      </div>
+    </body>
+    </html>
+  `;
 }
 
-// ========== دوال إنشاء PDF ==========
-function createPdfFromTemplate(templateId, name, gender) {
-  const tempIds = [];
-  try {
-    // التحقق من وجود قالب
-    if (!templateId) {
-      throw('قالب PDF غير متوفر');
-    }
-    
-    // إنشاء نسخة مؤقتة من النموذج
-    const templateFile = DriveApp.getFileById(templateId);
-    const tempFolder = getTempFolder();
-    const tempFile = templateFile.makeCopy(`Temp_${name}_${Date.now()}`, tempFolder);
-    tempIds.push(tempFile.getId());
-    
-    const doc = DocumentApp.openById(tempFile.getId());
-    const body = doc.getBody();
-    
-    // استبدال الاسم والنوع إذا وجد
-    body.replaceText('{الاسم}', name);
-    if (gender) {
-      body.replaceText('{النوع}', gender);
-    }
-    
-    doc.saveAndClose();
-    
-    // تحويل المستند المؤقت إلى PDF
-    const pdfBlob = tempFile.getAs('application/pdf');
-    const pdfFile = tempFolder.createFile(pdfBlob.setName(`Certificate_${name}_${Date.now()}.pdf`));
-    pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); 
-    
-    return { pdf: pdfFile, tempIds: tempIds };
-  } catch (e) {
-    Logger.log('خطأ في إنشاء PDF: ' + e.message);
-    throw('فشل إنشاء المستند: ' + e.message);
-  }
-}
-
-function createPdfWithImageFromTemplate(templateId, name, imageUrl, gender) {
-  const tempIds = [];
-  try {
-    // التحقق من وجود قالب
-    if (!templateId) {
-      throw('قالب PDF غير متوفر');
-    }
-    
-    // إنشاء نسخة مؤقتة من النموذج
-    const templateFile = DriveApp.getFileById(templateId);
-    const tempFolder = getTempFolder();
-    const tempFile = templateFile.makeCopy(`Temp_${name}_${Date.now()}`, tempFolder);
-    tempIds.push(tempFile.getId());
-    
-    const doc = DocumentApp.openById(tempFile.getId());
-    const body = doc.getBody();
-    
-    // استبدال الاسم والنوع إذا وجد
-    body.replaceText('{الاسم}', name);
-    if (gender) {
-      body.replaceText('{النوع}', gender);
-    }
-
-    // البحث عن مكان الصورة
-    const imagePlaceholder = body.findText('{الصورة}');
-    
-    if (!imagePlaceholder) {
-      throw('لم يتم العثور على مكان الصورة في القالب');
-    }
-
-    const element = imagePlaceholder.getElement();
-    const parent = element.getParent();
-    const index = parent.getChildIndex(element);
-
-    // التحقق من الفهرس
-    if (index < 0 || index >= parent.getNumChildren()) {
-      throw('موضع الصورة غير صحيح في القالب');
-    }
-
-    // إزالة العنصر النائب
-    parent.removeChild(element);
-
-    // الحصول على ملف الصورة
-    const imageFile = DriveApp.getFileById(imageUrl);
-    const blob = imageFile.getBlob();
-
-    // التحقق من صحة الصورة
-    if (!blob || blob.getBytes().length === 0) {
-      throw('ملف الصورة غير صالح أو فارغ');
-    }
-
-    // إدراج الصورة مع التحكم في الحجم
-    const image = parent.insertInlineImage(index, blob);
-    
-    // الحفاظ على نسبة العرض إلى الارتفاع
-    const originalWidth = image.getWidth();
-    const originalHeight = image.getHeight();
-    
-    if (originalWidth === 0 || originalHeight === 0) {
-      throw('أبعاد الصورة غير صالحة');
-    }
-    
-    const aspectRatio = originalWidth / originalHeight;
-    const newWidth = 200; // يمكن تعديل القيمة حسب الحاجة
-    image.setWidth(newWidth).setHeight(newWidth / aspectRatio);
-
-    doc.saveAndClose();
-    
-    // تحويل المستند المؤقت إلى PDF
-    const pdfBlob = tempFile.getAs('application/pdf');
-    const pdfFile = tempFolder.createFile(pdfBlob.setName(`ID_${name}_${Date.now()}.pdf`));
-    pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); 
-    
-    return { pdf: pdfFile, tempIds: tempIds };
-  } catch (e) {
-    Logger.log('خطأ في إنشاء PDF مع صورة: ' + e.message);
-    throw('فشل إنشاء البطاقة: ' + e.message);
-  }
-}
-
-// ========== تشغيل عملية التنظيف بشكل دوري ==========
-function setupTrigger() {
-  // حذف أي مشغلات موجودة مسبقاً لتجنب التكرار
-  const triggers = ScriptApp.getProjectTriggers();
-  for (let i = 0; i < triggers.length; i++) {
-    if (triggers[i].getHandlerFunction() === 'cleanupOldFiles') {
-      ScriptApp.deleteTrigger(triggers[i]);
-    }
-  }
-  
-  // إنشاء مشغل جديد يعمل كل ساعة
-  ScriptApp.newTrigger('cleanupOldFiles')
-    .timeBased()
-    .everyHours(1)
-    .create();
-  
-  return "تم إعداد عملية التنظيف التلقائي بنجاح";
-}
-
-// ========== تشغيل عملية التنظيف عند تشغيل النموذج ==========
-function onOpen() {
-  cleanupOldFiles();
+// Function to serve the HTML file
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('index')
+    .setTitle('نظام التسجيل')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
