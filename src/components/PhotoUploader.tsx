@@ -1,5 +1,8 @@
 
-import React from "react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Camera } from 'lucide-react';
 
 interface PhotoUploaderProps {
   photoPreview: string;
@@ -8,6 +11,7 @@ interface PhotoUploaderProps {
   handlePhotoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isLoading: boolean;
   isDarkMode: boolean;
+  submitDisabled: boolean;
 }
 
 const PhotoUploader: React.FC<PhotoUploaderProps> = ({
@@ -16,50 +20,61 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({
   photoInputRef,
   handlePhotoChange,
   isLoading,
-  isDarkMode
+  isDarkMode,
+  submitDisabled
 }) => {
   return (
-    <div 
-      onClick={triggerFileInput} 
-      className={`relative cursor-pointer border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all ${
-        isDarkMode 
-          ? 'border-gray-600 hover:border-indigo-400 bg-gray-800/50' 
-          : 'border-gray-300 hover:border-indigo-400 bg-gray-50/80'
-      } ${photoPreview ? 'h-56' : 'h-36'}`}
-    >
-      <input
-        ref={photoInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handlePhotoChange}
-        className="hidden"
-        disabled={isLoading}
-      />
+    <div className="space-y-3">
+      <Label className={`block ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+        الصورة الشخصية
+      </Label>
       
-      {photoPreview ? (
-        <div className="relative w-full h-full">
-          <img 
-            src={photoPreview} 
-            alt="معاينة الصورة" 
-            className="w-full h-full object-contain rounded"
-          />
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded">
-            <div className="text-white text-center">
-              <p>انقر لتغيير الصورة</p>
+      <div 
+        className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md cursor-pointer transition-colors duration-200 
+        ${isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'}
+        ${isLoading || submitDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={isLoading || submitDisabled ? undefined : triggerFileInput}
+      >
+        <div className="space-y-1 text-center">
+          {photoPreview ? (
+            <div className="flex flex-col items-center">
+              <img
+                src={photoPreview}
+                alt="Preview"
+                className="w-32 h-32 object-cover rounded-md mb-2"
+              />
+              <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
+                اضغط لتغيير الصورة
+              </p>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className={`mx-auto h-12 w-12 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <Camera size={48} />
+              </div>
+              <div className="flex text-sm">
+                <p className={`pr-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
+                  اضغط لتحميل صورة شخصية
+                </p>
+              </div>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                PNG, JPG, JPEG حتى 20MB
+              </p>
+            </>
+          )}
         </div>
-      ) : (
-        <>
-          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-          <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>انقر لاختيار صورة</span>
-          <span className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>يجب أن لا يتجاوز حجم الصورة 20 ميجابايت</span>
-        </>
-      )}
+        
+        <input
+          ref={photoInputRef}
+          id="photo-upload"
+          name="photo-upload"
+          type="file"
+          accept="image/png, image/jpeg, image/jpg"
+          className="sr-only"
+          onChange={handlePhotoChange}
+          disabled={isLoading || submitDisabled}
+        />
+      </div>
     </div>
   );
 };

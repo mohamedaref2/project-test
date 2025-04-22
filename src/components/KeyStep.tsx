@@ -1,13 +1,17 @@
 
-import React from "react";
+import React from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 interface KeyStepProps {
   accessKey: string;
   setAccessKey: (key: string) => void;
-  validateKeyHandler: () => Promise<void>;
+  validateKeyHandler: () => void;
   isLoading: boolean;
   errorMsg: string;
   isDarkMode: boolean;
+  submitDisabled: boolean;
 }
 
 const KeyStep: React.FC<KeyStepProps> = ({
@@ -16,45 +20,54 @@ const KeyStep: React.FC<KeyStepProps> = ({
   validateKeyHandler,
   isLoading,
   errorMsg,
-  isDarkMode
+  isDarkMode,
+  submitDisabled
 }) => {
+  // Handle key press for Enter key
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isLoading && !submitDisabled) {
+      validateKeyHandler();
+    }
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      <h1 className={`text-3xl font-bold text-center ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'} mb-8`}>
-        مرحبًا بك في نظام التسجيل
-      </h1>
-      
+    <div className="flex flex-col space-y-6 animate-fade-in">
+      <div className="text-center mb-2">
+        <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+          تسجيل الدخول
+        </h1>
+        <p className={`mt-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          أدخل مفتاح الوصول الخاص بك للمتابعة
+        </p>
+      </div>
+
       <div className="space-y-4">
-        <input
-          type="text"
-          value={accessKey}
-          onChange={(e) => setAccessKey(e.target.value)}
-          placeholder="أدخل مفتاح الوصول"
-          className={`w-full px-4 py-3 rounded-lg ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-700 border-gray-200'} border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all`}
-          disabled={isLoading}
-          readOnly={isLoading}
-        />
-        
-        <button
+        <div>
+          <Input
+            type="text"
+            placeholder="مفتاح الوصول"
+            value={accessKey}
+            onChange={(e) => setAccessKey(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className={`text-center ${isDarkMode ? 'bg-gray-700/60 text-white border-gray-600' : 'bg-white/80'} backdrop-blur-sm`}
+            disabled={isLoading || submitDisabled}
+          />
+          {errorMsg && (
+            <p className="text-red-500 text-sm mt-1 text-center">{errorMsg}</p>
+          )}
+        </div>
+
+        <Button
           onClick={validateKeyHandler}
-          disabled={isLoading}
-          className={`w-full py-3 rounded-lg font-bold transition-all ${
-            isLoading 
-              ? 'opacity-70 cursor-not-allowed' 
-              : 'hover:shadow-lg transform hover:-translate-y-0.5'
-          } ${isDarkMode 
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' 
-              : 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white'
-          }`}
+          disabled={isLoading || submitDisabled}
+          className="w-full relative overflow-hidden group"
         >
-          {isLoading ? "جاري التحقق..." : "تأكيد المفتاح"}
-        </button>
-        
-        {errorMsg && (
-          <div className="text-red-500 bg-red-100 border border-red-200 rounded-lg p-3 text-sm">
-            {errorMsg}
-          </div>
-        )}
+          <span className="relative z-10 flex items-center justify-center gap-2">
+            تأكيد المفتاح
+            <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+          </span>
+          <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md"></span>
+        </Button>
       </div>
     </div>
   );

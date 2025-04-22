@@ -37,6 +37,7 @@ const Index = () => {
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("pdf1");
   const [wisdomQuote, setWisdomQuote] = useState("");
+  const [submitDisabled, setSubmitDisabled] = useState(false);
   
   const wisdomQuotes = [
     "الصبر مفتاح الفرج",
@@ -138,6 +139,7 @@ const Index = () => {
 
     setIsLoading(true);
     setErrorMsg("");
+    setSubmitDisabled(true);
     setProgressText("جاري التحقق من المفتاح...");
     
     try {
@@ -177,6 +179,7 @@ const Index = () => {
       setErrorMsg(err.message || "حدث خطأ، الرجاء المحاولة لاحقًا");
     } finally {
       setIsLoading(false);
+      setSubmitDisabled(false);
     }
   };
 
@@ -266,6 +269,7 @@ const Index = () => {
     }
 
     setIsLoading(true);
+    setSubmitDisabled(true);
     
     try {
       // Prepare form data based on user rank
@@ -320,6 +324,7 @@ const Index = () => {
       });
     } finally {
       setIsLoading(false);
+      setSubmitDisabled(false);
     }
   };
 
@@ -378,6 +383,15 @@ const Index = () => {
 
       {/* Main card */}
       <div className={`relative ${isDarkMode ? 'bg-gray-800/40' : 'bg-white/40'} backdrop-blur-lg border ${isDarkMode ? 'border-gray-700/30' : 'border-white/30'} rounded-3xl w-full max-w-md mx-auto shadow-2xl z-10 transform transition-all hover:shadow-lg overflow-hidden`} style={{ direction: 'rtl' }}>
+        {/* Header Image */}
+        <div className="w-full h-[245px] overflow-hidden">
+          <img 
+            src="https://i.ibb.co/sJXfcDHM/3a4c72ac-fd79-4a6f-86d8-96031eec8209.jpg" 
+            alt="Header" 
+            className="w-full h-full object-cover object-center"
+          />
+        </div>
+        
         {/* Banner Image */}
         <BannerImage isDarkMode={isDarkMode} />
 
@@ -400,6 +414,7 @@ const Index = () => {
               isLoading={isLoading}
               errorMsg={errorMsg}
               isDarkMode={isDarkMode}
+              submitDisabled={submitDisabled}
             />
           )}
 
@@ -424,6 +439,7 @@ const Index = () => {
               previousFiles={previousFiles}
               isCollapsibleOpen={isCollapsibleOpen}
               setIsCollapsibleOpen={setIsCollapsibleOpen}
+              submitDisabled={submitDisabled}
             />
           )}
 
